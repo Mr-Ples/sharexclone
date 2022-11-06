@@ -1,4 +1,11 @@
 {
+  "IyWopVSurLwRKTUw.png": {
+    "type": "screenshot",
+    "date": "2022-11-06 23:49:02+00:00",
+    "place": "online",
+    "url": "https://s3.eu-central-1.amazonaws.com/cos-dev-attachments/ShareX/notsimon/IyWopVSurLwRKTUw.png",
+    "icon_path": "/home/simonl/bin/sharexyz/data/temp/IyWopVSurLwRKTUw.png"
+  },
   "ucCyuScUYpqKvKFd.png": {
     "type": "screenshot",
     "date": "2022-11-06 23:36:10+00:00",
@@ -341,12 +348,5 @@
     "place": "online",
     "url": "https://s3.eu-central-1.amazonaws.com/cos-dev-attachments/ShareX/notsimon/htHqBuPdmftFNFGP.mp4",
     "icon_path": "/home/simonl/bin/sharexyz/data/temp/htHqBuPdmftFNFGP.png"
-  },
-  "jHgNoCRlmrdFBXkz.mp4": {
-    "date": "2022-11-06 18:30:39+00:00",
-    "type": "video",
-    "place": "online",
-    "url": "https://s3.eu-central-1.amazonaws.com/cos-dev-attachments/ShareX/notsimon/jHgNoCRlmrdFBXkz.mp4",
-    "icon_path": "/home/simonl/bin/sharexyz/data/temp/jHgNoCRlmrdFBXkz.png"
   }
 }
