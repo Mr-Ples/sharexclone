@@ -1662,7 +1662,11 @@ background = ShareXYZTool()
 
 Gtk.main()
 
-#
-# with open(os.path.join(ICONS_DIR, "doc.png"), "rb") as img_file:
-# 	b64_string = base64.b64encode(img_file.read())
-# print(b64_string)
+
+def encode_file_to_b64_string(file_path: str = "doc.png"):
+    """
+    Takes any file and encodes it into base64 string
+    """
+    with open(os.path.join(ICONS_DIR, file_path), "rb") as img_file:
+        b64_string = base64.b64encode(img_file.read())
+    print(b64_string)
