@@ -252,6 +252,7 @@ if not os.path.isfile(os.path.join(CONFIG_PATH, 'sysconfig.json')):
         json.dumps(
             {
                 "upload": True,
+                "draw":   False,
                 "user":   "yournamehere",
                 "mode":   0
             }, indent=2
@@ -330,6 +331,7 @@ if not os.path.isfile(DESKTOP_FILE_PATH):
             de.write(entry)
 
 UPLOAD_AFTER_TASK = SYSTEM_CONFIG['upload'] == True
+DRAW_AFTER_TASK = SYSTEM_CONFIG['draw'] == True
 
 print(SYSTEM_CONFIG)
 
@@ -1097,6 +1099,7 @@ class ScreenshotCanvas(tk.Tk):
 
         self.attributes('-fullscreen', True)
 
+        self.first_tap = True
         self.canvas = tk.Canvas(self)
         self.canvas.pack(fill="both", expand=True)
 
@@ -1105,6 +1108,7 @@ class ScreenshotCanvas(tk.Tk):
         self.image = ImageTk.PhotoImage(image)
         self.photo = self.canvas.create_image(0, 0, image=self.image, anchor="nw")
 
+        self.lasx, self.lasy = 0, 0
         self.x, self.y = 0, 0
         self.rect, self.start_x, self.start_y = None, None, None
         self.deiconify()
@@ -1112,30 +1116,10 @@ class ScreenshotCanvas(tk.Tk):
         self.canvas.tag_bind(self.photo, "<ButtonPress-1>", self.on_button_press)
         self.canvas.tag_bind(self.photo, "<B1-Motion>", self.on_move_press)
         self.canvas.tag_bind(self.photo, "<ButtonRelease-1>", self.on_button_release)
+        self.canvas.tag_bind(self.photo, '<ButtonPress-3>', self.close_me)
 
-    def on_button_press(self, event):
-        self.start_x = event.x
-        self.start_y = event.y
-        self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline='red')
-
-    def on_move_press(self, event):
-        curX, curY = (event.x, event.y)
-        self.canvas.coords(self.rect, self.start_x, self.start_y, curX, curY)
-
-    def on_button_release(self, event):
-        self._bbox = self.canvas.bbox(self.rect)
-        x, y, w, h = self._bbox
-
-        # make all values positive
-        if self.monitor.x == 0:
-            x = max(x, 0)
-        y = max(y, 0)
-
-        self._bbox = (x, y, w, h)
-
-        if self.monitor.x > 0:
-            self._bbox = (x + self.monitor.x, y, w + self.monitor.width, h)
-
+    def close_me(self, event):
+        print('close_me')
         self.withdraw()
 
         if self._take_screenshot:
@@ -1146,6 +1130,51 @@ class ScreenshotCanvas(tk.Tk):
 
         self.destroy()
 
+    def on_button_press(self, event):
+        if self.first_tap:
+            self.start_x = event.x
+            self.start_y = event.y
+            self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline='red')
+        else:
+            self.lasx, self.lasy = event.x, event.y
+            self.canvas.create_line(
+                (self.lasx, self.lasy, event.x, event.y),
+                fill='red',
+                width=2
+            )
+            self.lasx, self.lasy = event.x, event.y
+
+    def on_move_press(self, event):
+        if self.first_tap:
+            curX, curY = (event.x, event.y)
+            self.canvas.coords(self.rect, self.start_x, self.start_y, curX, curY)
+        else:
+            self.canvas.create_line(
+                (self.lasx, self.lasy, event.x, event.y),
+                fill='red',
+                width=2
+            )
+            self.lasx, self.lasy = event.x, event.y
+
+    def on_button_release(self, event):
+        if self.first_tap:
+            self._bbox = self.canvas.bbox(self.rect)
+            x, y, w, h = self._bbox
+
+            # make all values positive
+            if self.monitor.x == 0:
+                x = max(x, 0)
+            y = max(y, 0)
+
+            self._bbox = (x, y, w, h)
+
+            if self.monitor.x > 0:
+                self._bbox = (x + self.monitor.x, y, w + self.monitor.width, h)
+            self.first_tap = False
+
+            if not DRAW_AFTER_TASK:
+                self.close_canvas()
+
     def take_screenshot(self):
         global HISTORY, SCT
 
@@ -1153,6 +1182,23 @@ class ScreenshotCanvas(tk.Tk):
             sct_img = SCT.grab(self._bbox)
             file = File(extension='.png')
             img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+
+            # if DRAW_AFTER_TASK:
+
+            #
+            # app = tk.Tk()
+            # app.geometry("400x400")
+            # app.mainloop()
+            # canvas = tk.Canvas(app)
+            # canvas.pack(anchor='nw', fill='both', expand=1)
+            # image = Image.open("singularity.png")
+            # image = image.resize((400, 400), Image.ANTIALIAS)
+            # image.show()
+            # # canvas.pack(fill="both", expand=True)
+            # img2 = canvas.create_image(0, 0, image=ImageTk.PhotoImage(image), anchor="nw")
+            #
+            # canvas.tag_bind(img2, "<Button-1>", get_x_and_y)
+            # canvas.tag_bind(img2, "<B1-Motion>", draw_smth)
 
             aspect_ratio = img.size[1] / img.size[0]
 
@@ -1170,6 +1216,7 @@ class ScreenshotCanvas(tk.Tk):
             img_resized.save(os.path.join(DATA_PATH, 'temp', file.file_name))
 
             update_history_file(file)
+
             if not UPLOAD_AFTER_TASK:
                 img_resized.show()
             else:
@@ -1230,6 +1277,12 @@ class TrayIcon:
             checked=lambda item: UPLOAD_AFTER_TASK
         )
 
+        draw_after_capture = pystray.MenuItem(
+            'Draw after capture',
+            self._on_draw_after_task,
+            checked=lambda item: DRAW_AFTER_TASK
+        )
+
         clear_cache = pystray.MenuItem(
             'Clear Cache',
             self._clear_cache,
@@ -1241,6 +1294,7 @@ class TrayIcon:
             history,
             recording_mode,
             upload_after_capture,
+            draw_after_capture,
             clear_cache,
             exit_menu
         )
@@ -1280,6 +1334,12 @@ class TrayIcon:
         global UPLOAD_AFTER_TASK
         UPLOAD_AFTER_TASK = not item.checked
         SYSTEM_CONFIG['upload'] = UPLOAD_AFTER_TASK
+        open(os.path.join(CONFIG_PATH, 'sysconfig.json'), 'w+').write(json.dumps(SYSTEM_CONFIG, indent=2))
+
+    def _on_draw_after_task(self, icon, item):
+        global DRAW_AFTER_TASK
+        DRAW_AFTER_TASK = not item.checked
+        SYSTEM_CONFIG['draw'] = DRAW_AFTER_TASK
         open(os.path.join(CONFIG_PATH, 'sysconfig.json'), 'w+').write(json.dumps(SYSTEM_CONFIG, indent=2))
 
     def _set_state(self, v):
@@ -1652,6 +1712,37 @@ class NotificationBubble(GObject.Object):
     def close(self):
         self.notification.close()
 
+
+# def get_x_and_y(event):
+#     global lasx, lasy
+#     lasx, lasy = event.x, event.y
+#
+#
+# def draw_smth(event):
+#     global lasx, lasy
+#     canvas.create_line(
+#         (lasx, lasy, event.x, event.y),
+#         fill='red',
+#         width=2
+#     )
+#     lasx, lasy = event.x, event.y
+#
+#
+# image = Image.open("singularity.png")
+# image = image.resize((400, 400), Image.ANTIALIAS)
+# img = ImageTk.PhotoImage(image)
+#
+# app = tk.Tk()
+# app.geometry("400x400")
+#
+# canvas = tk.Canvas(app)
+# canvas.pack(anchor='nw', fill='both', expand=1)
+# canvas.pack(fill="both", expand=True)
+# img2 = canvas.create_image(0, 0, image=img, anchor="nw")
+#
+# canvas.bind("<Button-1>", get_x_and_y)
+# canvas.bind("<B1-Motion>", draw_smth)
+# app.mainloop()
 
 notify = NotificationBubble()
 
