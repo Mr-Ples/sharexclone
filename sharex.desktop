@@ -1,0 +1,7 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Exec=cd /home/simonl/bin/sharexyz; python /home/simonl/bin/sharexyz/sharexyz.py
+Icon=/home/simonl/bin/sharexyz/data/icons/ShareX.png
+Name=ShareX
+Terminal=true
+Type=Application
