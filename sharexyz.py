@@ -1102,7 +1102,6 @@ class ScreenshotCanvas(tk.Tk):
         self.first_tap = True
         self.canvas = tk.Canvas(self)
         self.canvas.pack(fill="both", expand=True)
-
         image = ImageGrab.grab(bbox=bbox, include_layered_windows=False, all_screens=True)
 
         self.image = ImageTk.PhotoImage(image)
@@ -1117,6 +1116,13 @@ class ScreenshotCanvas(tk.Tk):
         self.canvas.tag_bind(self.photo, "<B1-Motion>", self.on_move_press)
         self.canvas.tag_bind(self.photo, "<ButtonRelease-1>", self.on_button_release)
         self.canvas.tag_bind(self.photo, '<ButtonPress-3>', self.close_me)
+        self.canvas.tag_bind(self.photo, '<Button-5> ', self.destroy_me)
+
+    def destroy_me(self, event):
+        print('destroy_me')
+        self.withdraw()
+
+        self.destroy()
 
     def close_me(self, event):
         print('close_me')
@@ -1140,7 +1146,7 @@ class ScreenshotCanvas(tk.Tk):
             self.canvas.create_line(
                 (self.lasx, self.lasy, event.x, event.y),
                 fill='red',
-                width=2
+                width=8
             )
             self.lasx, self.lasy = event.x, event.y
 
@@ -1152,7 +1158,7 @@ class ScreenshotCanvas(tk.Tk):
             self.canvas.create_line(
                 (self.lasx, self.lasy, event.x, event.y),
                 fill='red',
-                width=2
+                width=8
             )
             self.lasx, self.lasy = event.x, event.y
 
@@ -1171,9 +1177,6 @@ class ScreenshotCanvas(tk.Tk):
             if self.monitor.x > 0:
                 self._bbox = (x + self.monitor.x, y, w + self.monitor.width, h)
             self.first_tap = False
-
-            if not DRAW_AFTER_TASK:
-                self.close_canvas()
 
     def take_screenshot(self):
         global HISTORY, SCT
