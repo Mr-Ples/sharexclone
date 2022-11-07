@@ -1178,7 +1178,7 @@ class ScreenshotCanvas(tk.Tk):
                 self._bbox = (x + self.monitor.x, y, w + self.monitor.width, h)
             self.first_tap = False
 
-            if not self.take_screenshot:
+            if not self._take_screenshot:
                 self.withdraw()
                 self.destroy()
 
