@@ -6,3 +6,4 @@ data/uploads/
 data/history.json
 data/online_history.json
 data/config/sysconfig.json
+*pycache*
