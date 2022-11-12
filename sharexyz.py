@@ -43,7 +43,7 @@ except:
 
     raise Exception("\nPlease install PyGObject dependencies manually: https://pygobject.readthedocs.io/en/latest/devguide/dev_environ.html?highlight=install#install-dependencies")
 
-os.environ['PYSTRAY_BACKEND'] = 'gtk'
+# os.environ['PYSTRAY_BACKEND'] = 'gtk'
 
 try:
     from botocore.exceptions import ClientError
@@ -1225,7 +1225,8 @@ class ScreenshotCanvas(tk.Tk):
             update_history_file(file)
 
             if not UPLOAD_AFTER_TASK:
-                img_resized.show()
+                notify_me = NotificationBubble()
+                notify_me.send_notification("Screenshot captured", "Screenshot captured", clickable=True, action_callable=lambda *args: img_resized.show())
             else:
                 GLib.idle_add(lambda: upload_file(file))
 
@@ -1706,11 +1707,14 @@ class NotificationBubble(GObject.Object):
         self.notification = None
         self.text = ''
 
-    def send_notification(self, title, text, file_path_to_icon=ICON_PATH, clickable=False):
+    def send_notification(self, title, text, file_path_to_icon=ICON_PATH, clickable=False, action_callable=None):
         self.text = text
         self.notification = Notify.Notification.new(title, text, file_path_to_icon)
         if clickable:
-            self.notification.add_action('clicked', 'Open', self.go_to_link)
+            if action_callable:
+                self.notification.add_action('clicked', 'Open', action_callable)
+            else:
+                self.notification.add_action('clicked', 'Open', self.go_to_link)
         self.notification.show()
 
     def go_to_link(self, *args):
