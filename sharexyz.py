@@ -7,6 +7,7 @@ import io
 import json
 import mimetypes
 import os
+import glob
 import secrets
 import shutil
 import string
@@ -15,10 +16,12 @@ import threading
 import time
 import traceback
 import webbrowser
+
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from itertools import islice
 from operator import getitem
+
 
 import binaries
 
@@ -1190,23 +1193,6 @@ class ScreenshotCanvas(tk.Tk):
             file = File(extension='.png')
             img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
 
-            # if DRAW_AFTER_TASK:
-
-            #
-            # app = tk.Tk()
-            # app.geometry("400x400")
-            # app.mainloop()
-            # canvas = tk.Canvas(app)
-            # canvas.pack(anchor='nw', fill='both', expand=1)
-            # image = Image.open("singularity.png")
-            # image = image.resize((400, 400), Image.ANTIALIAS)
-            # image.show()
-            # # canvas.pack(fill="both", expand=True)
-            # img2 = canvas.create_image(0, 0, image=ImageTk.PhotoImage(image), anchor="nw")
-            #
-            # canvas.tag_bind(img2, "<Button-1>", get_x_and_y)
-            # canvas.tag_bind(img2, "<B1-Motion>", draw_smth)
-
             aspect_ratio = img.size[1] / img.size[0]
 
             print("Size before resize: ", img.size, "\n aspect ratio: ", aspect_ratio)
@@ -1249,6 +1235,7 @@ class TrayIcon:
             title='ShareXYZ',
             menu=self._build_menus()
         )
+        Keybinder.bind("<Super>U", self.__upload_latest)
 
     def _build_menus(self):
         online_history = pystray.MenuItem(
@@ -1350,14 +1337,14 @@ class TrayIcon:
         SYSTEM_CONFIG['upload'] = UPLOAD_AFTER_TASK
         open(os.path.join(CONFIG_PATH, 'sysconfig.json'), 'w+').write(json.dumps(SYSTEM_CONFIG, indent=2))
 
-    def _upload_latest(self, icon, item):
-        import glob
-        import os
-
-        list_of_files = glob.glob(f'{SCREENSHOTS_DIR}/*')
+    def __upload_latest(self, *args):
+        list_of_files = glob.glob(f'{SCREENSHOTS_DIR}/*') + glob.glob(f'{VIDEOS_DIR}/*')
         latest_file = max(list_of_files, key=os.path.getctime)
         print(latest_file)
         upload_file(File(path=latest_file), keep=True)
+
+    def _upload_latest(self, icon, item):
+        self.__upload_latest()
 
     def _on_draw_after_task(self, icon, item):
         global DRAW_AFTER_TASK
@@ -1738,37 +1725,6 @@ class NotificationBubble(GObject.Object):
     def close(self):
         self.notification.close()
 
-
-# def get_x_and_y(event):
-#     global lasx, lasy
-#     lasx, lasy = event.x, event.y
-#
-#
-# def draw_smth(event):
-#     global lasx, lasy
-#     canvas.create_line(
-#         (lasx, lasy, event.x, event.y),
-#         fill='red',
-#         width=2
-#     )
-#     lasx, lasy = event.x, event.y
-#
-#
-# image = Image.open("singularity.png")
-# image = image.resize((400, 400), Image.ANTIALIAS)
-# img = ImageTk.PhotoImage(image)
-#
-# app = tk.Tk()
-# app.geometry("400x400")
-#
-# canvas = tk.Canvas(app)
-# canvas.pack(anchor='nw', fill='both', expand=1)
-# canvas.pack(fill="both", expand=True)
-# img2 = canvas.create_image(0, 0, image=img, anchor="nw")
-#
-# canvas.bind("<Button-1>", get_x_and_y)
-# canvas.bind("<B1-Motion>", draw_smth)
-# app.mainloop()
 
 notify = NotificationBubble()
 
