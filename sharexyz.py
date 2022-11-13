@@ -1291,6 +1291,11 @@ class TrayIcon:
             checked=lambda item: DRAW_AFTER_TASK
         )
 
+        upload_latest = pystray.MenuItem(
+            'Upload latest',
+            self._upload_latest,
+        )
+
         clear_cache = pystray.MenuItem(
             'Clear Cache',
             self._clear_cache,
@@ -1303,6 +1308,7 @@ class TrayIcon:
             recording_mode,
             upload_after_capture,
             draw_after_capture,
+            upload_latest,
             clear_cache,
             exit_menu
         )
@@ -1343,6 +1349,15 @@ class TrayIcon:
         UPLOAD_AFTER_TASK = not item.checked
         SYSTEM_CONFIG['upload'] = UPLOAD_AFTER_TASK
         open(os.path.join(CONFIG_PATH, 'sysconfig.json'), 'w+').write(json.dumps(SYSTEM_CONFIG, indent=2))
+
+    def _upload_latest(self, icon, item):
+        import glob
+        import os
+
+        list_of_files = glob.glob(f'{SCREENSHOTS_DIR}/*')
+        latest_file = max(list_of_files, key=os.path.getctime)
+        print(latest_file)
+        upload_file(File(path=latest_file), keep=True)
 
     def _on_draw_after_task(self, icon, item):
         global DRAW_AFTER_TASK
