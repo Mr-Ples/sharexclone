@@ -1,6 +1,7 @@
 # sharexclone
-## install
+## setup
 - install some stuff
+- if monitors with different sizes some manual config might be required, ossi is pro with that
 ## run
 - configure your name in the config file `path/to/repo/data/config/sysconfig.json`
 - right click the tray icon to see some config options
