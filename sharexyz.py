@@ -1,13 +1,12 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 import base64
 import datetime
 import enum
+import glob
 import io
 import json
 import mimetypes
 import os
-import glob
 import secrets
 import shutil
 import string
@@ -16,12 +15,10 @@ import threading
 import time
 import traceback
 import webbrowser
-
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from itertools import islice
 from operator import getitem
-
 
 import binaries
 
@@ -1377,7 +1374,6 @@ class TrayIcon:
         HistoryWindow.reopen_history_window()
 
     def run(self):
-        self.tray_icon.run_detached()
         setup_notify = NotificationBubble()
         setup_notify.send_notification(
             "Setting up...", "This may take a few minutes."
