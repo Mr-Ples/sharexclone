@@ -1,24 +1,10 @@
 # -*- coding: utf-8 -*-
 import base64
-import datetime
 import enum
-import glob
-import io
 import json
-import mimetypes
 import os
-import secrets
-import shutil
-import string
 import subprocess
-import threading
-import time
 import traceback
-import webbrowser
-from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor
-from itertools import islice
-from operator import getitem
 
 import binaries
 
@@ -90,30 +76,6 @@ except:
             subprocess.Popen(f'pip install {requirement}', shell=True).wait()
         except:
             traceback.print_exc()
-
-    from botocore.exceptions import ClientError
-    import psutil
-    import requests
-    import pytz
-    import mss
-    import mss.tools
-    from mss import ScreenShotError
-    import gi
-    import boto3
-    import pyperclip
-    import pystray
-    from PIL import (
-        ImageGrab,
-        ImageTk,
-        Image,
-        ImageDraw,
-    )
-    from playsound import playsound
-    from screeninfo import get_monitors
-
-gi.require_version("Gtk", "3.0")
-gi.require_version("Keybinder", "3.0")
-gi.require_version('Notify', '0.7')
 
 if len([True for p in psutil.process_iter() if 'sharexyz' in p.name()]) > 1:
     print("Sharexyz already running. Exiting.")
@@ -327,5 +289,7 @@ UPLOAD_AFTER_TASK = SYSTEM_CONFIG['upload'] == True
 DRAW_AFTER_TASK = SYSTEM_CONFIG['draw'] == True
 LATEST_KEY = None
 KEY_PRESSED = None
+CANVAS = None
+FIRST_HISTORY_OPEN = True
 
 print(SYSTEM_CONFIG)
