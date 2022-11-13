@@ -798,6 +798,9 @@ class ScreenshotCanvas(tk.Tk):
 
         monitor1 = get_monitors()[0]
         monitor2 = get_monitors()[1]
+        if monitor1.x > monitor2.x:
+            monitor1 = get_monitors()[1]
+            monitor2 = get_monitors()[0]
 
         bbox_monitor1 = (monitor1.x, monitor1.y, monitor1.width, monitor1.height)
         bbox_monitor2 = (monitor2.x, monitor2.y, monitor1.width + monitor2.width, monitor2.height)
