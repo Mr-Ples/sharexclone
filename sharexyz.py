@@ -639,6 +639,16 @@ class VideoRecorder:
 
         Keybinder.bind("<Alt>Z", self.take_video)
 
+    def kill_video(self):
+        if self.recording and self.proc:
+            self.recording = False
+            self.proc = None
+            try:
+                _kill_process('simplescreenrecorder')
+            except:
+                pass
+            env.WAITER['active'] = False
+
     def take_video(self, keystring):
         print('take video in')
 
@@ -749,7 +759,7 @@ class ShareXYZTool(Gtk.Window):
 
         env.SCT = mss.mss()
 
-        VideoRecorder()
+        env.VIDEO_RECORDER = VideoRecorder()
         Keybinder.init()
         Keybinder.bind("<Super>X", self.take_screenshot)
         Keybinder.bind("<Super>W", self.disable_waiter)
@@ -1444,6 +1454,8 @@ def on_release(key):
     env.KEY_PRESSED = None
     if key == keyboard.Key.esc:
         print('ESC!')
+        env.VIDEO_RECORDER.kill_video()
+
     # print('Key released: {0}'.format(key))
 
 
