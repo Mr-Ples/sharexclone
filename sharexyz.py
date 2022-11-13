@@ -712,10 +712,10 @@ class VideoRecorder:
         config = json.load(open(os.path.join(env.CONFIG_PATH, f'{self.setting.name}.json')))
         print(self.setting)
         if self.setting.value == env.RecordingMode.Area.value:
-            env.CANVAS = ScreenshotCanvas(take_screenshot=False)
-            env.CANVAS.mainloop()
+            canvas = ScreenshotCanvas(take_screenshot=False)
+            canvas.mainloop()
 
-            x, y, w, h = env.CANVAS.coordinates
+            x, y, w, h = canvas.coordinates
             config['input']['video_x'] = x
             config['input']['video_y'] = y
             config['input']['video_w'] = w - x
@@ -767,9 +767,9 @@ class ShareXYZTool(Gtk.Window):
 
         env.WAITER['active'] = True
 
-        env.CANVAS = ScreenshotCanvas()
-        env.CANVAS.mainloop()
-        # env.CANVAS = None
+        canvas = ScreenshotCanvas()
+        canvas.mainloop()
+
         env.WAITER['active'] = False
         print('take screenshot out')
 
@@ -780,13 +780,6 @@ class ShareXYZTool(Gtk.Window):
 class ScreenshotCanvas(tk.Tk):
     def __init__(self, take_screenshot: bool = True):
         super().__init__()
-        # if env.CANVAS:
-        #     self.withdraw()
-        #     self.destroy()
-        #     env.CANVAS = None
-        #     print('destroying and out')
-        #     return
-        env.CANVAS = self
         self.withdraw()
 
         self._take_screenshot = take_screenshot
@@ -829,13 +822,7 @@ class ScreenshotCanvas(tk.Tk):
         self.canvas.tag_bind(self.photo, "<B1-Motion>", self.on_move_press)
         self.canvas.tag_bind(self.photo, "<ButtonRelease-1>", self.on_button_release)
         self.canvas.tag_bind(self.photo, '<ButtonPress-3>', self.close_me)
-        self.canvas.tag_bind(self.photo, '<Button-5> ', self.destroy_me)
-
-    def destroy_me2(self):
-        print('destroy_me')
-        self.withdraw()
-
-        self.destroy()
+        self.canvas.bind_all('<Escape>', self.destroy_me)
 
     def destroy_me(self, event):
         print('destroy_me')
@@ -1457,12 +1444,6 @@ def on_release(key):
     env.KEY_PRESSED = None
     if key == keyboard.Key.esc:
         print('ESC!')
-        if env.CANVAS:
-            env.CANVAS.destroy_me2()
-            # env.CANVAS.withdraw()
-            # env.CANVAS.destroy()
-            # env.CANVAS = None
-
     # print('Key released: {0}'.format(key))
 
 
