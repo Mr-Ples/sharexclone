@@ -10,6 +10,7 @@
       - if draw is enabled it will allow you to draw after choosing the area
       - tap `<Right Mouse>` to save the image
       - scroll down to cancel
+      - hold `<Shift>` to draw rectangles
   - `Alt + Z`: take video
     - Draw the area of where to take video
 - drag and drop any file onto the local or online history prompt to upload the file instantly
