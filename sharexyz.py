@@ -24,7 +24,6 @@ from operator import getitem
 
 import boto3
 import gi
-import keyboard
 import mss
 import mss.tools
 import pystray
