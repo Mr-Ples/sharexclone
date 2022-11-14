@@ -1457,6 +1457,7 @@ def on_release(key):
     if key == keyboard.Key.esc:
         print('ESC!')
         env.VIDEO_RECORDER.kill_video()
+        env.WAITER['active'] = False
 
     # print('Key released: {0}'.format(key))
 
