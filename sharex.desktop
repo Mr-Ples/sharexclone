@@ -1,7 +1,19 @@
-#!/usr/bin/env xdg-open
 [Desktop Entry]
-Exec=cd /home/simonl/bin/sharexyz; python /home/simonl/bin/sharexyz/sharexyz.py
+Comment[en_GB]=
+Comment=
+Exec=cd '/home/simonl/bin/sharexyz;' python /home/simonl/bin/sharexyz/sharexyz.py
+GenericName[en_GB]=
+GenericName=
 Icon=/home/simonl/bin/sharexyz/data/icons/ShareX.png
+MimeType=
+Name[en_GB]=ShareX
 Name=ShareX
+Path=
+StartupNotify=true
 Terminal=true
+TerminalOptions=
 Type=Application
+X-DBUS-ServiceName=
+X-DBUS-StartupType=
+X-KDE-SubstituteUID=false
+X-KDE-Username=
