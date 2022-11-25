@@ -172,12 +172,12 @@ def _generate_cache():
     for file_name, data in env.ONLINE_HISTORY.items():
         # add url entry if there is none
         if data['place'] == 'online' and not data.get('url'):
-            log(f'file={file_name}, Adding url')
+            # log(f'file={file_name}, Adding url')
             data['url'] = env.URL + file_name
 
         # if history entry has a path and the path exists return
         if env.ONLINE_HISTORY[file_name].get('icon_path') and os.path.isfile(env.ONLINE_HISTORY[file_name].get('icon_path')):
-            log(f'file={file_name}, Icon path already exists: ', env.ONLINE_HISTORY[file_name].get('icon_path'))
+            # log(f'file={file_name}, Icon path already exists: ', env.ONLINE_HISTORY[file_name].get('icon_path'))
             continue
 
         # create path, should be png always
@@ -186,18 +186,18 @@ def _generate_cache():
         # if the new path already exists update the history file and return
         if os.path.isfile(temp_file):
             env.ONLINE_HISTORY[file_name]['icon_path'] = temp_file
-            log(f'file={file_name}, Temp Icon path already exists: ', temp_file)
+            # log(f'file={file_name}, Temp Icon path already exists: ', temp_file)
             continue
 
         if data['type'] == 'unknown':
-            log(f'file={file_name}, Data type unknown, getting icon path')
+            # log(f'file={file_name}, Data type unknown, getting icon path')
             env.ONLINE_HISTORY[file_name]['icon_path'] = get_default_icon_path(env.ONLINE_HISTORY[file_name])
             continue
 
         if data['type'] == 'video':
-            log(f'file={file_name}, Data type video, getting icon path')
+            # log(f'file={file_name}, Data type video, getting icon path')
             if data['place'] == 'local':
-                log(f'file={file_name}, local video')
+                # log(f'file={file_name}, local video')
                 subprocess.Popen(
                     ["ffmpeg",
                      "-i",
@@ -212,12 +212,12 @@ def _generate_cache():
                 ).wait(10)
                 if os.path.isfile(temp_file):
                     env.ONLINE_HISTORY[file_name]['icon_path'] = temp_file
-                    log('thumbnail from local video SUCCESS', env.ONLINE_HISTORY[file_name])
+                    # log('thumbnail from local video SUCCESS', env.ONLINE_HISTORY[file_name])
                 else:
                     env.ONLINE_HISTORY[file_name]['icon_path'] = get_default_icon_path(env.ONLINE_HISTORY[file_name])
-                    log('thumbnail from local video FAILED', env.ONLINE_HISTORY[file_name])
+                    # log('thumbnail from local video FAILED', env.ONLINE_HISTORY[file_name])
                 continue
-            log(f'file={file_name}, online video')
+            # log(f'file={file_name}, online video')
             subprocess.Popen(
                 ["ffmpeg",
                  "-i",
@@ -232,35 +232,35 @@ def _generate_cache():
             ).wait(10)
             if os.path.isfile(temp_file):
                 env.ONLINE_HISTORY[file_name]['icon_path'] = temp_file
-                log('thumbnail from online video  SUCCESS', env.ONLINE_HISTORY[file_name])
+                # log('thumbnail from online video  SUCCESS', env.ONLINE_HISTORY[file_name])
             else:
                 env.ONLINE_HISTORY[file_name]['icon_path'] = get_default_icon_path(env.ONLINE_HISTORY[file_name])
-                log('thumbnail from online video FAILED', env.ONLINE_HISTORY[file_name])
+                # log('thumbnail from online video FAILED', env.ONLINE_HISTORY[file_name])
             continue
         if data['place'] == 'online':
-            log(f'file={file_name}, online screenshot')
+            # log(f'file={file_name}, online screenshot')
             try:
                 img = Image.open(requests.get(data['url'], stream=True).raw)
                 img.save(temp_file)
-                log(f'file={file_name}, online screenshot gotten')
+                # log(f'file={file_name}, online screenshot gotten')
             except:
                 traceback.print_exc()
             if os.path.isfile(temp_file):
                 env.ONLINE_HISTORY[file_name]['icon_path'] = temp_file
-                log('thumbnail from online picture SUCCESS', env.ONLINE_HISTORY[file_name])
+                # log('thumbnail from online picture SUCCESS', env.ONLINE_HISTORY[file_name])
             else:
                 env.ONLINE_HISTORY[file_name]['icon_path'] = get_default_icon_path(env.ONLINE_HISTORY[file_name])
-                log('thumbnail from online picture FAILED', env.ONLINE_HISTORY[file_name])
+                # log('thumbnail from online picture FAILED', env.ONLINE_HISTORY[file_name])
             continue
-        log(f'file={file_name}, local screenshot gotten')
+        # log(f'file={file_name}, local screenshot gotten')
         shutil.copy2(os.path.join(env.SCREENSHOTS_DIR, file_name), temp_file)
         env.ONLINE_HISTORY[file_name]['icon_path'] = temp_file
         if os.path.isfile(temp_file):
             env.ONLINE_HISTORY[file_name]['icon_path'] = temp_file
-            log('thumbnail from offline picture SUCCESS', env.ONLINE_HISTORY[file_name])
+            # log('thumbnail from offline picture SUCCESS', env.ONLINE_HISTORY[file_name])
         else:
             env.ONLINE_HISTORY[file_name]['icon_path'] = get_default_icon_path(env.ONLINE_HISTORY[file_name])
-            log('thumbnail from offline picture FAILED', env.ONLINE_HISTORY[file_name])
+            # log('thumbnail from offline picture FAILED', env.ONLINE_HISTORY[file_name])
 
         if not os.path.isfile(env.ONLINE_HISTORY[file_name]['icon_path']):
             env.ONLINE_HISTORY[file_name]['icon_path'] = get_default_icon_path(data)
@@ -270,12 +270,12 @@ def _generate_cache():
 
         # add url entry if there is none
         if data['place'] == 'online' and not data.get('url'):
-            log(f'file={file_name}, Adding url')
+            # log(f'file={file_name}, Adding url')
             data['url'] = env.URL + file_name
 
         # if history entry has a path and the path exists return
         if env.HISTORY[file_name].get('icon_path') and os.path.isfile(env.HISTORY[file_name].get('icon_path')):
-            log(f'file={file_name}, Icon path already exists: ', env.HISTORY[file_name].get('icon_path'))
+            # log(f'file={file_name}, Icon path already exists: ', env.HISTORY[file_name].get('icon_path'))
             continue
 
         # create path, should be png always
@@ -284,19 +284,19 @@ def _generate_cache():
         # if the new path already exists update the history file and return
         if os.path.isfile(temp_file):
             env.HISTORY[file_name]['icon_path'] = temp_file
-            log(f'file={file_name}, Temp Icon path already exists: ', temp_file)
+            # log(f'file={file_name}, Temp Icon path already exists: ', temp_file)
             continue
 
         if data['type'] == 'unknown':
-            log(f'file={file_name}, Data type unknown, getting icon path')
+            # log(f'file={file_name}, Data type unknown, getting icon path')
             env.HISTORY[file_name]['icon_path'] = get_default_icon_path(env.HISTORY[file_name])
 
             continue
 
         if data['type'] == 'video':
-            log(f'file={file_name}, Data type video, getting icon path')
+            # log(f'file={file_name}, Data type video, getting icon path')
             if data['place'] == 'local':
-                log(f'file={file_name}, local video')
+                # log(f'file={file_name}, local video')
                 subprocess.Popen(
                     ["ffmpeg",
                      "-i",
@@ -311,12 +311,12 @@ def _generate_cache():
                 ).wait(10)
                 if os.path.isfile(temp_file):
                     env.HISTORY[file_name]['icon_path'] = temp_file
-                    log('thumbnail from local video SUCCESS', env.HISTORY[file_name])
+                    # log('thumbnail from local video SUCCESS', env.HISTORY[file_name])
                 else:
                     env.HISTORY[file_name]['icon_path'] = get_default_icon_path(env.HISTORY[file_name])
-                    log('thumbnail from local video FAILED', env.HISTORY[file_name])
+                    # log('thumbnail from local video FAILED', env.HISTORY[file_name])
                 continue
-            log(f'file={file_name}, online video')
+            # log(f'file={file_name}, online video')
             subprocess.Popen(
                 ["ffmpeg",
                  "-i",
@@ -331,35 +331,35 @@ def _generate_cache():
             ).wait(10)
             if os.path.isfile(temp_file):
                 env.HISTORY[file_name]['icon_path'] = temp_file
-                log('thumbnail from online video  SUCCESS', env.HISTORY[file_name])
+                # log('thumbnail from online video  SUCCESS', env.HISTORY[file_name])
             else:
                 env.HISTORY[file_name]['icon_path'] = get_default_icon_path(env.HISTORY[file_name])
-                log('thumbnail from online video FAILED', env.HISTORY[file_name])
+                # log('thumbnail from online video FAILED', env.HISTORY[file_name])
             continue
         if data['place'] == 'online':
-            log(f'file={file_name}, online screenshot')
+            # log(f'file={file_name}, online screenshot')
             try:
                 img = Image.open(requests.get(data['url'], stream=True).raw)
                 img.save(temp_file)
-                log(f'file={file_name}, online screenshot gotten')
+                # log(f'file={file_name}, online screenshot gotten')
             except:
                 traceback.print_exc()
             if os.path.isfile(temp_file):
                 env.HISTORY[file_name]['icon_path'] = temp_file
-                log('thumbnail from online picture SUCCESS', env.HISTORY[file_name])
+                # log('thumbnail from online picture SUCCESS', env.HISTORY[file_name])
             else:
                 env.HISTORY[file_name]['icon_path'] = get_default_icon_path(env.HISTORY[file_name])
-                log('thumbnail from online picture FAILED', env.HISTORY[file_name])
+                # log('thumbnail from online picture FAILED', env.HISTORY[file_name])
             continue
         log(f'file={file_name}, local screenshot gotten')
         shutil.copy2(os.path.join(env.SCREENSHOTS_DIR, file_name), temp_file)
         env.HISTORY[file_name]['icon_path'] = temp_file
         if os.path.isfile(temp_file):
             env.HISTORY[file_name]['icon_path'] = temp_file
-            log('thumbnail from offline picture SUCCESS', env.HISTORY[file_name])
+            # log('thumbnail from offline picture SUCCESS', env.HISTORY[file_name])
         else:
             env.HISTORY[file_name]['icon_path'] = get_default_icon_path(env.HISTORY[file_name])
-            log('thumbnail from offline picture FAILED', env.HISTORY[file_name])
+            # log('thumbnail from offline picture FAILED', env.HISTORY[file_name])
 
         if not os.path.isfile(env.HISTORY[file_name]['icon_path']):
             env.HISTORY[file_name]['icon_path'] = get_default_icon_path(data)
