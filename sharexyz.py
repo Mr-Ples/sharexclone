@@ -1,4 +1,6 @@
 # must be at the top
+import env
+
 import base64
 import datetime
 import glob
@@ -31,8 +33,6 @@ from PIL import (
     ImageTk,
     Image,
 )
-
-import env
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Keybinder", "3.0")
@@ -121,9 +121,10 @@ class File:
 
 
 def log(*args) -> None:
-    print(*args)
-    with open('out.txt', 'a+') as output:
-        print(*args, file=output)
+    with threading.Lock():
+        print(f'[{datetime.datetime.utcnow().replace(microsecond=0).time()} UTC] ', *args, flush=True)
+        with open('out.txt', 'a+') as output:
+            print(f'[{datetime.datetime.utcnow().replace(microsecond=0).time()} UTC] ', *args, file=output)
 
 
 def update_history_file(file: File):
