@@ -1,4 +1,10 @@
 # must be at the top
+import concurrent
+from typing import (
+    Callable,
+    Any,
+)
+
 import env
 
 import base64
@@ -635,6 +641,29 @@ def _kill_process(process_name: str):
     subprocess.Popen([f'pkill -f {process_name}'], stdout=subprocess.PIPE, shell=True)
 
 
+def run_with_timeout(func: Callable[..., Any], timeout: int, tries: int = 1, backoff: int = 3, raise_timeout: bool = False) -> Any:
+    """
+    Runs a command with retries and timeout.
+    """
+    # limit backoff and tries to respect gitlab time limits
+    tries = min(tries, 3)  # limit to 3 tries because 6561 second wait if given 4 tries with 3 second exponential backoff
+    backoff = min(backoff, 5)  # limit backoff because 1296 second wait if given 3 tries with 6 second exponential backoff
+
+    for index in range(tries):
+        try:
+            thread_pool_executor = ThreadPoolExecutor(None)
+            future = thread_pool_executor.submit(func)
+            return future.result(timeout)
+        except concurrent.futures._base.TimeoutError:
+            if index > 0:
+                log(f"run_with_timeout attempt={index+1} failed, retrying after {backoff} seconds...")
+                time.sleep(backoff)
+                backoff *= backoff
+
+    if raise_timeout:
+        raise TimeoutError
+
+
 class VideoRecorder:
     def __init__(self):
         self.file = File(extension='.mp4')
@@ -658,13 +687,19 @@ class VideoRecorder:
         log('take video in')
 
         if self.recording and self.proc:
-            # _end_recording()
+            def _wait_for_exit_safe():
+                for line in io.TextIOWrapper(self.proc.stderr, encoding="utf-8"):
+                    log(line)
+                    if 'kb/s' in line or 'Stopped page' in line or 'Standard input closed' in line:
+                        break
+
             def _save_recording():
                 try:
                     _, _ = self.proc.communicate(input=b"record-save\n")
                 except OSError:
                     pass
 
+            duration = self.start_time - time.time()
             self.recording = False
             save_notify = NotificationBubble()
             save_notify.send_notification("Saving...", "")
@@ -673,10 +708,7 @@ class VideoRecorder:
                 target=_save_recording
             ).start()
 
-            for line in io.TextIOWrapper(self.proc.stderr, encoding="utf-8"):
-                log(line)
-                if 'kb/s' in line or 'Stopped page' in line or 'Standard input closed' in line:
-                    break
+            run_with_timeout(_wait_for_exit_safe, min(10, max(3, int(duration/6))))
 
             self.proc = None
 
@@ -698,6 +730,7 @@ class VideoRecorder:
             except:
                 traceback.print_exc()
         else:
+            self.start_time = time.time()
             if env.WAITER['active']:
                 video_waiter_notify = NotificationBubble()
                 video_waiter_notify.send_notification(
