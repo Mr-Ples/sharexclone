@@ -1010,6 +1010,11 @@ class TrayIcon:
             self._upload_latest,
         )
 
+        open_latest = pystray.MenuItem(
+            'Open latest',
+            self._open_latest,
+        )
+
         clear_cache = pystray.MenuItem(
             'Clear Cache',
             self._clear_cache,
@@ -1023,6 +1028,7 @@ class TrayIcon:
             upload_after_capture,
             draw_after_capture,
             upload_latest,
+            open_latest,
             clear_cache,
             exit_menu
         )
@@ -1064,6 +1070,12 @@ class TrayIcon:
         env.UPLOAD_AFTER_TASK = not item.checked
         env.SYSTEM_CONFIG['upload'] = env.UPLOAD_AFTER_TASK
         open(os.path.join(env.CONFIG_PATH, 'sysconfig.json'), 'w+').write(json.dumps(env.SYSTEM_CONFIG, indent=2))
+    
+    def _open_latest(self, *args):
+        list_of_files = glob.glob(f'{env.SCREENSHOTS_DIR}/*') + glob.glob(f'{env.VIDEOS_DIR}/*')
+        latest_file = max(list_of_files, key=os.path.getctime)
+        log(latest_file)
+        os.system('xdg-open "%s"' % latest_file)
 
     def __upload_latest(self, *args):
         list_of_files = glob.glob(f'{env.SCREENSHOTS_DIR}/*') + glob.glob(f'{env.VIDEOS_DIR}/*')
