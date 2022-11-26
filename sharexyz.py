@@ -901,13 +901,13 @@ class ScreenshotCanvas(tk.Tk):
         elif env.KEY_PRESSED == keyboard.Key.shift:
             self.start_x = event.x
             self.start_y = event.y
-            self.draw_rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline='red', width=8)
+            self.draw_rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline='red', width=4)
         else:
             self.lasx, self.lasy = event.x, event.y
             self.canvas.create_line(
                 (self.lasx, self.lasy, event.x, event.y),
                 fill='red',
-                width=8
+                width=4
             )
             self.lasx, self.lasy = event.x, event.y
 
@@ -922,7 +922,7 @@ class ScreenshotCanvas(tk.Tk):
             self.canvas.create_line(
                 (self.lasx, self.lasy, event.x, event.y),
                 fill='red',
-                width=8
+                width=4
             )
             self.lasx, self.lasy = event.x, event.y
 
