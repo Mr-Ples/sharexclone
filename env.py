@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import base64
+import datetime
 import enum
 import json
 import os
@@ -29,6 +30,11 @@ if not os.path.isdir(UPLOADS_DIR):
 CONFIG_PATH = os.path.join(DATA_PATH, 'config')
 if not os.path.isdir(CONFIG_PATH):
     os.mkdir(CONFIG_PATH)
+
+LOGS_SESSION = datetime.datetime.now().replace(microsecond=0)
+LOGS_PATH = os.path.join(HOME, 'logs')
+if not os.path.isdir(LOGS_PATH):
+    os.mkdir(LOGS_PATH)
 
 SOUNDS_DIR = os.path.join(DATA_PATH, 'sounds')
 if not os.path.isdir(SOUNDS_DIR):
@@ -164,7 +170,6 @@ except Exception:
 
     if SYSTEM_CONFIG['pystray_backend'] is not None:
         os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
-
 
 try:
     import gi

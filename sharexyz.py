@@ -131,12 +131,12 @@ class File:
 def log(*args) -> None:
     with threading.Lock():
         print(f'[{datetime.datetime.utcnow().replace(microsecond=0).time()} UTC] ', *args, flush=True)
-        with open('out.txt', 'a+') as output:
+        with open(f'{os.path.join(env.LOGS_PATH, str(env.LOGS_SESSION))}.txt', 'a+') as output:
             print(f'[{datetime.datetime.utcnow().replace(microsecond=0).time()} UTC] ', *args, file=output)
 
 
 def debug_log(*args) -> None:
-    with open('debug_out.txt', 'a+') as output:
+    with open(f'{os.path.join(env.LOGS_PATH, str(env.LOGS_SESSION))}_DEBUG.txt', 'a+') as output:
         print(f'[{datetime.datetime.utcnow().replace(microsecond=0).time()} UTC] ', *args, file=output)
 
 
