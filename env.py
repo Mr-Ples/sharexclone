@@ -23,7 +23,7 @@ except:
 
     for requirement in requirements:
         try:
-            subprocess.Popen(f'pip install {requirement}', shell=True).wait()
+            subprocess.Popen(f'pip install --upgrade --force-reinstall {requirement}', shell=True).wait()
         except:
             traceback.print_exc()
 
@@ -61,7 +61,7 @@ except:
         'screeninfo==0.8',
         'playsound==1.3.0',
         'pgi',
-        'mss',
+        'mss==6.1.0',
         'pytz',
         'requests',
         'psutil',
@@ -73,7 +73,7 @@ except:
 
     for requirement in requirements:
         try:
-            subprocess.Popen(f'pip install {requirement}', shell=True).wait()
+            subprocess.Popen(f'pip install --upgrade --force-reinstall {requirement}', shell=True).wait()
         except:
             traceback.print_exc()
 
