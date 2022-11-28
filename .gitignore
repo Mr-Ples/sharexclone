@@ -1,3 +1,4 @@
+# yeet
 logs
 .idea
 *png
@@ -7,6 +8,7 @@ data/uploads/
 data/history.json
 data/online_history.json
 data/config
+*desktop
 
 
 # Byte-compiled / optimized / DLL files

@@ -302,6 +302,7 @@ if not os.path.isfile(ICON_PATH):
 
 DESKTOP_FILE_PATH = os.path.join(HOME, 'sharex.desktop')
 DESKTOP_ENTRY = [
+    '#!/usr/bin/env xdg-open\n',
     '[Desktop Entry]\n',
     f'Exec=cd {HOME}; python {os.path.join(HOME, "sharexyz.py")}\n',
     f"Icon={ICON_PATH}\n",
