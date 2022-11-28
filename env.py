@@ -13,76 +13,6 @@ try:
 except:
     raise Exception("Please install Tkinter with command: sudo apt-get install python3-tk")
 
-try:
-    import gi
-except:
-    requirements = [
-        'pycairo',
-        'PyGObject'
-    ]
-
-    for requirement in requirements:
-        try:
-            subprocess.Popen(f'pip install --upgrade --force-reinstall {requirement}', shell=True).wait()
-        except:
-            traceback.print_exc()
-
-    raise Exception("\nPlease install PyGObject dependencies manually: https://pygobject.readthedocs.io/en/latest/devguide/dev_environ.html?highlight=install#install-dependencies")
-
-# os.environ['PYSTRAY_BACKEND'] = 'gtk'
-
-try:
-    import psutil
-    import requests
-    import pytz
-    import mss
-    import mss.tools
-    import gi
-    import boto3
-    import pyperclip
-    import pystray
-    from PIL import (
-        ImageGrab,
-        ImageTk,
-        Image,
-        ImageDraw,
-    )
-    from botocore.exceptions import ClientError
-    from mss import ScreenShotError
-    from pynput import keyboard
-    from playsound import playsound
-    from screeninfo import get_monitors
-except:
-    requirements = [
-        'boto3==1.21.39',
-        'pyperclip==1.8.2',
-        "pystray==0.19.3",
-        'Pillow==9.1.0',
-        'screeninfo==0.8',
-        'playsound==1.3.0',
-        'pgi',
-        'mss==6.1.0',
-        'pytz',
-        'requests',
-        'psutil',
-        'botocore',
-        'pycairo',
-        'PyGObject',
-        'pynput'
-    ]
-
-    for requirement in requirements:
-        try:
-            subprocess.Popen(f'pip install --upgrade --force-reinstall {requirement}', shell=True).wait()
-        except:
-            traceback.print_exc()
-
-if len([True for p in psutil.process_iter() if 'sharexyz' in p.name()]) > 1:
-    print("Sharexyz already running. Exiting.")
-    exit()
-
-SCT = None
-
 HOME = os.path.abspath(".")
 print(HOME)
 if not os.path.isdir(HOME):
@@ -103,14 +33,6 @@ if not os.path.isdir(CONFIG_PATH):
 SOUNDS_DIR = os.path.join(DATA_PATH, 'sounds')
 if not os.path.isdir(SOUNDS_DIR):
     os.mkdir(SOUNDS_DIR)
-
-if not os.path.isfile(os.path.join(SOUNDS_DIR, 'upload_success.wav')):
-    with open(os.path.join(SOUNDS_DIR, 'upload_success.wav'), "wb") as fh:
-        fh.write(base64.decodebytes(binaries.upload_success))
-
-if not os.path.isfile(os.path.join(SOUNDS_DIR, 'upload_failed.wav')):
-    with open(os.path.join(SOUNDS_DIR, 'upload_failed.wav'), "wb") as fh:
-        fh.write(base64.decodebytes(binaries.upload_failed))
 
 CONFIG_TEMPLATE = {
     "global":  {
@@ -202,20 +124,123 @@ if not os.path.isfile(os.path.join(CONFIG_PATH, f'{RecordingMode.FollowCursor.na
         json.dumps(CONFIG_TEMPLATE, indent=2)
     )
 
+SETTINGS_TEMPLTE = {
+    "upload":          True,
+    "draw":            False,
+    "user":            "yournamehere",
+    "mode":            0,
+    "pystray_backend": None,  # https://pystray.readthedocs.io/en/latest/usage.html
+    "instant_start":   True
+}
+
 if not os.path.isfile(os.path.join(CONFIG_PATH, 'sysconfig.json')):
     open(os.path.join(CONFIG_PATH, 'sysconfig.json'), 'w+').write(
-        json.dumps(
-            {
-                "upload": True,
-                "draw":   False,
-                "user":   "yournamehere",
-                "mode":   0
-            }, indent=2
-        )
+        json.dumps(SETTINGS_TEMPLTE, indent=2)
     )
 
 SYSTEM_CONFIG = json.load(open(os.path.join(CONFIG_PATH, 'sysconfig.json')))
-USER = SYSTEM_CONFIG['user']
+try:
+    USER = SYSTEM_CONFIG['user']
+    INSTANT_START = SYSTEM_CONFIG['instant_start']
+
+    if SYSTEM_CONFIG['pystray_backend'] is not None:
+        os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
+except Exception:
+    traceback.print_exc()
+    print('Settings file does not contain all entries. Adding them...')
+    settings_dict = {}
+    for entry, value in SYSTEM_CONFIG.items():
+        settings_dict.update({entry: value})
+    for entry, value in SETTINGS_TEMPLTE.items():
+        if entry in settings_dict.keys():
+            continue
+        settings_dict.update({entry: value})
+    open(os.path.join(CONFIG_PATH, 'sysconfig.json'), 'w+').write(
+        json.dumps(settings_dict, indent=2)
+    )
+    print('Done writing settings:\n', json.dumps(settings_dict, indent=2))
+    USER = SYSTEM_CONFIG['user']
+    INSTANT_START = SYSTEM_CONFIG['instant_start']
+
+    if SYSTEM_CONFIG['pystray_backend'] is not None:
+        os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
+
+
+try:
+    import gi
+except:
+    requirements = [
+        'pycairo',
+        'PyGObject'
+    ]
+
+    for requirement in requirements:
+        try:
+            subprocess.Popen(f'pip install --upgrade --force-reinstall {requirement}', shell=True).wait()
+        except:
+            traceback.print_exc()
+
+    raise Exception("\nPlease install PyGObject dependencies manually: https://pygobject.readthedocs.io/en/latest/devguide/dev_environ.html?highlight=install#install-dependencies")
+
+try:
+    import psutil
+    import requests
+    import pytz
+    import mss
+    import mss.tools
+    import gi
+    import boto3
+    import pyperclip
+    import pystray
+    from PIL import (
+        ImageGrab,
+        ImageTk,
+        Image,
+        ImageDraw,
+    )
+    from botocore.exceptions import ClientError
+    from mss import ScreenShotError
+    from pynput import keyboard
+    from playsound import playsound
+    from screeninfo import get_monitors
+except:
+    requirements = [
+        'boto3==1.21.39',
+        'pyperclip==1.8.2',
+        "pystray==0.19.3",
+        'Pillow==9.1.0',
+        'screeninfo==0.8',
+        'playsound==1.3.0',
+        'pgi',
+        'mss==6.1.0',
+        'pytz',
+        'requests',
+        'psutil',
+        'botocore',
+        'pycairo',
+        'PyGObject',
+        'pynput'
+    ]
+
+    for requirement in requirements:
+        try:
+            subprocess.Popen(f'pip install --upgrade --force-reinstall {requirement}', shell=True).wait()
+        except:
+            traceback.print_exc()
+
+if len([True for p in psutil.process_iter() if 'sharexyz' in p.name()]) > 1:
+    print("Sharexyz already running. Exiting.")
+    exit()
+
+SCT = None
+
+if not os.path.isfile(os.path.join(SOUNDS_DIR, 'upload_success.wav')):
+    with open(os.path.join(SOUNDS_DIR, 'upload_success.wav'), "wb") as fh:
+        fh.write(base64.decodebytes(binaries.upload_success))
+
+if not os.path.isfile(os.path.join(SOUNDS_DIR, 'upload_failed.wav')):
+    with open(os.path.join(SOUNDS_DIR, 'upload_failed.wav'), "wb") as fh:
+        fh.write(base64.decodebytes(binaries.upload_failed))
 
 # s3
 BUCKET_NAME = 'cos-dev-attachments'
