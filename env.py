@@ -203,6 +203,7 @@ except Exception:
     SUB_FOLDER = SYSTEM_CONFIG['sub_folder']
     OPEN_AFTER_SS = SYSTEM_CONFIG['open_after_offline_screenshot']
     MONITORS_OFFSET = SYSTEM_CONFIG['monitors']
+    BINDS = SYSTEM_CONFIG['binds']
 
     if SYSTEM_CONFIG['pystray_backend'] is not None:
         os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
