@@ -887,8 +887,14 @@ class ScreenshotCanvas(tk.Tk):
             monitor1 = get_monitors()[1]
             monitor2 = get_monitors()[0]
 
-        bbox_monitor1 = (monitor1.x + env.MONITORS_OFFSET['monitor1']['x_offset'], monitor1.y + env.MONITORS_OFFSET['monitor1']['y_offset'], monitor1.width, monitor1.height)
-        bbox_monitor2 = (monitor2.x + env.MONITORS_OFFSET['monitor2']['x_offset'], monitor2.y + env.MONITORS_OFFSET['monitor2']['y_offset'], monitor1.width + monitor2.width, monitor2.height)
+        bbox_monitor1 = (monitor1.x + env.MONITORS_OFFSET['monitors']['monitor1']['x_offset'],
+                         monitor1.y + env.MONITORS_OFFSET['monitors']['monitor1']['y_offset'],
+                         monitor1.width + env.MONITORS_OFFSET['monitors']['monitor1']['x_offset'],
+                         monitor1.height + env.MONITORS_OFFSET['monitors']['monitor1']['y_offset'])
+        bbox_monitor2 = (monitor2.x + env.MONITORS_OFFSET['monitors']['monitor2']['x_offset'],
+                         monitor2.y + env.MONITORS_OFFSET['monitors']['monitor2']['y_offset'],
+                         monitor1.width + monitor2.width + env.MONITORS_OFFSET['monitors']['monitor2']['x_offset'],
+                         monitor2.height + env.SYSTEM_CONFIG['monitors']['monitor2']['y_offset'])
 
         self.monitor = monitor1
         if abs_coord_x > monitor1.width:
@@ -982,10 +988,16 @@ class ScreenshotCanvas(tk.Tk):
                 x = max(x, 0)
             y = max(y, 0)
 
-            self._bbox = (x, y, w, h)
+            self._bbox = (x + env.SYSTEM_CONFIG['monitors']['monitor1']['x_offset'],
+                          y + env.SYSTEM_CONFIG['monitors']['monitor1']['y_offset'],
+                          w + env.SYSTEM_CONFIG['monitors']['monitor1']['x_offset'],
+                          h + env.SYSTEM_CONFIG['monitors']['monitor1']['y_offset'])
 
             if self.monitor.x > 0:
-                self._bbox = (x + self.monitor.x, y, w + self.monitor.width, h)
+                self._bbox = (x + self.monitor.x + env.SYSTEM_CONFIG['monitors']['monitor2']['x_offset'],
+                              y + env.SYSTEM_CONFIG['monitors']['monitor2']['y_offset'],
+                              w + self.monitor.width + env.SYSTEM_CONFIG['monitors']['monitor2']['x_offset'],
+                              h + env.SYSTEM_CONFIG['monitors']['monitor2']['y_offset'])
             self.first_tap = False
 
             if not self._take_screenshot:
