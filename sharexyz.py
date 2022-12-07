@@ -1088,8 +1088,7 @@ class TrayIcon:
             pystray.MenuItem(
                 'History',
                 self.show_history
-            ),
-            history_settings
+            )
         )
 
         history = pystray.MenuItem(
@@ -1116,23 +1115,28 @@ class TrayIcon:
             'Recording Mode',
             radio_menu
         )
-
-        instant_start = pystray.MenuItem(
-            'Instant start',
-            self._instant_start,
-            checked=lambda item: env.INSTANT_START
+        settings = pystray.Menu(
+            pystray.MenuItem(
+                'Instant start',
+                self._instant_start,
+                checked=lambda item: env.INSTANT_START
+            ),
+            pystray.MenuItem(
+                'Upload after capture',
+                self._on_upload_after_task,
+                checked=lambda item: env.UPLOAD_AFTER_TASK
+            ),
+            pystray.MenuItem(
+                'Draw after capture',
+                self._on_draw_after_task,
+                checked=lambda item: env.DRAW_AFTER_TASK
+            ),
+            recording_mode,
+            history_settings
         )
-
-        upload_after_capture = pystray.MenuItem(
-            'Upload after capture',
-            self._on_upload_after_task,
-            checked=lambda item: env.UPLOAD_AFTER_TASK
-        )
-
-        draw_after_capture = pystray.MenuItem(
-            'Draw after capture',
-            self._on_draw_after_task,
-            checked=lambda item: env.DRAW_AFTER_TASK
+        settings_menu = pystray.MenuItem(
+            'Settings',
+            settings
         )
 
         upload_latest = pystray.MenuItem(
@@ -1154,10 +1158,8 @@ class TrayIcon:
         return pystray.Menu(
             upload_file,
             history,
-            recording_mode,
-            instant_start,
-            upload_after_capture,
-            draw_after_capture,
+            # recording_mode,
+            settings_menu,
             upload_latest,
             open_latest,
             clear_cache,
