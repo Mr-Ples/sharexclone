@@ -227,8 +227,6 @@ def _generate_cache():
         log("ERR:", err)
         log("OUT:", out)
 
-
-
         return cmd
 
     log('generate cache')
@@ -417,12 +415,13 @@ def compile_ordered_dict(dictio, nr_items: int = 0):
 
 
 def _order_history():
-    env.HISTORY = compile_ordered_dict(env.HISTORY, 50)
+    env.HISTORY = compile_ordered_dict(env.HISTORY)
     env.ONLINE_HISTORY = compile_ordered_dict(env.ONLINE_HISTORY)
+    log('_order_history Writing to history files')
     with open(env.HISTORY_DIR, 'w+') as on_his:
-        on_his.write(json.dumps(env.ONLINE_HISTORY, indent=2, default=str))
+        on_his.write(json.dumps(env.HISTORY_DIR, indent=2, default=str))
     with open(env.ONLINE_HISTORY_DIR, 'w+') as his:
-        his.write(json.dumps(env.HISTORY, indent=2, default=str))
+        his.write(json.dumps(env.ONLINE_HISTORY, indent=2, default=str))
 
 
 def get_history_days() -> int:
@@ -468,6 +467,7 @@ def get_bucket_history(limit: int = 100):
         #     break
         if not ('.mp4' in my_bucket_object.key or '.png' in my_bucket_object.key):
             continue
+
         name = my_bucket_object.key.split('/')[-1]
         if env.ONLINE_HISTORY.get(name):
             continue
@@ -1444,7 +1444,9 @@ class HistoryWindow(Gtk.Window):
 
         sw = Gtk.ScrolledWindow()
         problem_files = []
-        for index, item in enumerate(env.HISTORY.items()):
+        non_forbidden_items = {key: value for key, value in env.HISTORY.items() if (not value.get('forbidden')) and (not value.get('broken_video')) and (not value.get('broken_screenshot')) and validate_date_age(datetime.datetime.strptime(value['date'].split(' ')[0], "%Y-%m-%d"))}
+        sorted_dict = compile_ordered_dict(non_forbidden_items)
+        for index, item in enumerate(sorted_dict.items()):
             file_name, data = item
             try:
                 thumbnail = Gtk.Image.new_from_pixbuf(
