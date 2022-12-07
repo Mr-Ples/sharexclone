@@ -145,7 +145,8 @@ SETTINGS_TEMPLTE = {
     "mode":            0,
     "pystray_backend": None,  # https://pystray.readthedocs.io/en/latest/usage.html
     "instant_start":   True,
-    "history_days":    0
+    "history_days":    0,
+    "sub_folder":      True
 }
 
 if not os.path.isfile(os.path.join(CONFIG_PATH, 'sysconfig.json')):
@@ -158,6 +159,7 @@ try:
     HISTORY_DAYS = SYSTEM_CONFIG['history_days']
     USER = SYSTEM_CONFIG['user']
     INSTANT_START = SYSTEM_CONFIG['instant_start']
+    SUB_FOLDER = SYSTEM_CONFIG['sub_folder']
 
     if SYSTEM_CONFIG['pystray_backend'] is not None:
         os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
@@ -177,6 +179,7 @@ except Exception:
     print('Done writing settings:\n', json.dumps(settings_dict, indent=2))
     USER = SYSTEM_CONFIG['user']
     INSTANT_START = SYSTEM_CONFIG['instant_start']
+    SUB_FOLDER = SYSTEM_CONFIG['sub_folder']
 
     if SYSTEM_CONFIG['pystray_backend'] is not None:
         os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
@@ -260,8 +263,18 @@ if not os.path.isfile(os.path.join(SOUNDS_DIR, 'upload_failed.wav')):
 
 # s3
 BUCKET_NAME = 'cos-dev-attachments'
-BUCKET_FOLDER = f'ShareX/{USER}/'
-URL = f'https://s3.{os.getenv("REGION_NAME")}.amazonaws.com/{BUCKET_NAME}/{BUCKET_FOLDER}'
+
+
+def get_bucket_folder():
+    if SUB_FOLDER:
+        MONTH_SUB_FOLDER_NAME = str(datetime.datetime.now().date().strftime("%m%y"))
+        BUCKET_FOLDER = f'ShareX/{USER}/{MONTH_SUB_FOLDER_NAME}/'
+    else:
+        BUCKET_FOLDER = f'ShareX/{USER}/'
+    return BUCKET_FOLDER
+
+
+URL = f'https://s3.{os.getenv("REGION_NAME")}.amazonaws.com/{BUCKET_NAME}/{get_bucket_folder()}'
 print(URL)
 # local dirs
 VIDEOS_DIR = os.path.join(HOME, 'videos')

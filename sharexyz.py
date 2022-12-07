@@ -69,7 +69,7 @@ class File:
         self._date = ''
         self._file_name = file_name
         self._path = path
-
+        print(f'PATH:"{path}"')
         if not file_name:
             self._date = datetime.datetime.utcnow().replace(microsecond=0, tzinfo=datetime.timezone.utc).astimezone(tz=datetime.timezone.utc)
             self._file_name = str(self._date).split('+')[0] + extension
@@ -419,7 +419,7 @@ def _order_history():
     env.ONLINE_HISTORY = compile_ordered_dict(env.ONLINE_HISTORY)
     log('_order_history Writing to history files')
     with open(env.HISTORY_DIR, 'w+') as on_his:
-        on_his.write(json.dumps(env.HISTORY_DIR, indent=2, default=str))
+        on_his.write(json.dumps(env.HISTORY, indent=2, default=str))
     with open(env.ONLINE_HISTORY_DIR, 'w+') as his:
         his.write(json.dumps(env.ONLINE_HISTORY, indent=2, default=str))
 
@@ -455,7 +455,7 @@ def get_bucket_history(limit: int = 100):
 
     sorted_objects = sorted(
         my_bucket.objects.filter(
-            Prefix=env.BUCKET_FOLDER
+            Prefix=env.get_bucket_folder()
         ),
         key=obj_last_modified,
         reverse=True
@@ -492,7 +492,8 @@ def get_bucket_history(limit: int = 100):
 def _get_history():
     def _get_local_history():
         for directory in [env.SCREENSHOTS_DIR, env.VIDEOS_DIR]:
-            for file_name in os.listdir(directory)[:100]:
+            for file_name in os.listdir(directory):
+                print(file_name)
                 if env.HISTORY.get(file_name):
                     continue
                 if '-' not in file_name:
@@ -500,6 +501,8 @@ def _get_history():
                 file = File(file_name=file_name)
                 if not validate_date_age(file.date):
                     break
+                if not validate_date_age(file.date):
+                    continue
                 env.HISTORY[file.file_name] = {
                     "date":  file.date,
                     "type":  file.type,
@@ -583,7 +586,7 @@ copy, paste = init_xclip_clipboard()
 
 def upload_file(file: File, keep=False):
     def _upload_file(s3_client, file_name, path):
-        object_name = os.path.join(env.BUCKET_FOLDER, file_name)
+        object_name = os.path.join(env.get_bucket_folder(), file_name)
         log(
             f'path={path}\n'
             f'file_name={file_name}\n'
@@ -1034,6 +1037,11 @@ class TrayIcon:
         Keybinder.bind("<Super>U", self.__upload_latest)
 
     def _build_menus(self):
+        upload_file = pystray.MenuItem(
+            'Upload file',
+            self._upload_file,
+        )
+
         days_menu = pystray.Menu(
             pystray.MenuItem(
                 '7 Days',
@@ -1144,6 +1152,7 @@ class TrayIcon:
 
         exit_menu = pystray.MenuItem('Quit', self.exit_everything)
         return pystray.Menu(
+            upload_file,
             history,
             recording_mode,
             instant_start,
@@ -1154,6 +1163,9 @@ class TrayIcon:
             clear_cache,
             exit_menu
         )
+
+    def _upload_file(self):
+        UploadFileWindow.reopen_upload_window()
 
     def _clear_cache(self):
         if env.WAITER['active']:
@@ -1282,7 +1294,7 @@ class OnlineHistoryWindow(Gtk.Window):
         notify_upload = NotificationBubble()
         notify_upload.send_notification('Opening Window...', '')
 
-        non_forbidden_items = {key: value for key, value in env.ONLINE_HISTORY.items() if (not value.get('forbidden')) and (not value.get('broken_video')) and (not value.get('broken_screenshot')) and validate_date_age(datetime.datetime.strptime(value['date'].split(' ')[0], "%Y-%m-%d"))}
+        non_forbidden_items = {key: value for key, value in env.ONLINE_HISTORY.items() if (not value.get('forbidden')) and (not value.get('broken_video')) and (not value.get('broken_screenshot')) and validate_date_age(datetime.datetime.strptime(str(value['date']).split(' ')[0], "%Y-%m-%d"))}
         sorted_dict = compile_ordered_dict(non_forbidden_items)
         for index, item in enumerate(sorted_dict.items()):
             try:
@@ -1430,6 +1442,113 @@ class OnlineHistoryWindow(Gtk.Window):
         OnlineHistoryWindow.initialize()
 
 
+class UploadFileWindow(Gtk.Window):
+    UPLOAD_FILE_WINDOW = None
+
+    def __init__(self):
+        super().__init__()
+        self._file_path = ""
+
+        self.set_icon_from_file(env.ICON_PATH)
+        self.modify_bg(Gtk.StateType.NORMAL, Gdk.Color(65535, 65535, 65535))
+        self.set_title("Upload File")
+        self.set_size_request(500, 500)
+
+        grid = Gtk.Grid()
+        upload = Gtk.Label(label=f"Drag And Drop Files Anywhere In This Window To Upload")
+        upload.set_hexpand(True)
+        upload.set_size_request(450, 350)
+        upload_button = Gtk.Button(label="Choose file to upload")
+        # upload_button.set_size_request(100, 100)
+        grid.attach(upload, 1, 0, 1, 1)
+        grid.attach(upload_button, 1, 2, 1, 1)
+
+        upload_button.connect("clicked", self.file_choose_dialog)
+
+        self.connect("delete-event", self.on_rekt)
+        self.connect("destroy", self.on_rekt)
+        self.connect("drag-data-received", self.on_drag_and_drop)
+        self.drag_dest_set_target_list(None)
+        self.drag_dest_add_text_targets()
+
+        self.add(grid)
+
+        self.show_all()
+        UploadFileWindow.UPLOAD_FILE_WINDOW = self
+
+    def file_choose_dialog(self, button, *data):
+        dialog = Gtk.FileChooserDialog("Please choose a file", None,
+            Gtk.FileChooserAction.OPEN,
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+             Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            path = dialog.get_filename()
+            print("Open clicked")
+            print("File selected: " + path)
+            dialog.destroy()
+            upload_file(File(path=f'{path}'), keep=True)
+        elif response == Gtk.ResponseType.CANCEL:
+            print("Cancel clicked")
+            dialog.destroy()
+
+    def on_drag_and_drop(self, wid, context, x, y, data, info, time):
+        notify.send_notification("Uploading files...", '')
+        file_paths = data.get_data().decode('utf-8').replace('file:///', '').split('\n')
+
+        for file_path in file_paths:
+            upload_file(File(path=f'/{file_path}'), keep=True)
+        log(file_paths)
+
+    def on_rekt(self, *kestring):
+        HistoryWindow.UPLOAD_FILE_WINDOW = None
+        self.destroy()
+
+    def on_upload(self, button, *data):
+        notify_upload = NotificationBubble()
+        notify_upload.send_notification('Uploading...', '')
+        file_name, _, date, copy_button, icon = data
+        upload_file(File(file_name))
+
+    @staticmethod
+    def destroy_window():
+        log('destoy window')
+        if UploadFileWindow.UPLOAD_FILE_WINDOW:
+            log('destoying window')
+            UploadFileWindow.UPLOAD_FILE_WINDOW.destroy()
+            UploadFileWindow.UPLOAD_FILE_WINDOW = None
+
+    @staticmethod
+    def initialize():
+        log('initialize')
+        UploadFileWindow.UPLOAD_FILE_WINDOW = UploadFileWindow()
+        UploadFileWindow.UPLOAD_FILE_WINDOW.set_keep_above(True)
+        UploadFileWindow.UPLOAD_FILE_WINDOW.show()
+        UploadFileWindow.UPLOAD_FILE_WINDOW.hide()
+        UploadFileWindow.UPLOAD_FILE_WINDOW.show()
+        UploadFileWindow.UPLOAD_FILE_WINDOW.set_keep_above(True)
+        UploadFileWindow.UPLOAD_FILE_WINDOW.present()
+        UploadFileWindow.UPLOAD_FILE_WINDOW.set_keep_above(True)
+        UploadFileWindow.UPLOAD_FILE_WINDOW.set_keep_above(False)
+
+    @staticmethod
+    def refresh_window():
+        log('refresh')
+        UploadFileWindow.UPLOAD_FILE_WINDOW = UploadFileWindow()
+        UploadFileWindow.UPLOAD_FILE_WINDOW.hide()
+        UploadFileWindow.UPLOAD_FILE_WINDOW.show()
+        UploadFileWindow.UPLOAD_FILE_WINDOW.set_keep_above(True)
+        UploadFileWindow.UPLOAD_FILE_WINDOW.present()
+        UploadFileWindow.UPLOAD_FILE_WINDOW.set_keep_above(False)
+
+    @staticmethod
+    def reopen_upload_window(*args):
+        log('reopen_file_window')
+        UploadFileWindow.destroy_window()
+        UploadFileWindow.initialize()
+
+
 class HistoryWindow(Gtk.Window):
     HISTORY_WINDOW = None
 
@@ -1444,7 +1563,7 @@ class HistoryWindow(Gtk.Window):
 
         sw = Gtk.ScrolledWindow()
         problem_files = []
-        non_forbidden_items = {key: value for key, value in env.HISTORY.items() if (not value.get('forbidden')) and (not value.get('broken_video')) and (not value.get('broken_screenshot')) and validate_date_age(datetime.datetime.strptime(value['date'].split(' ')[0], "%Y-%m-%d"))}
+        non_forbidden_items = {key: value for key, value in env.HISTORY.items() if (not value.get('forbidden')) and (not value.get('broken_video')) and (not value.get('broken_screenshot')) and validate_date_age(datetime.datetime.strptime(str(value['date']).split(' ')[0], "%Y-%m-%d"))}
         sorted_dict = compile_ordered_dict(non_forbidden_items)
         for index, item in enumerate(sorted_dict.items()):
             file_name, data = item
