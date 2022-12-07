@@ -146,7 +146,16 @@ SETTINGS_TEMPLTE = {
     "pystray_backend": None,  # https://pystray.readthedocs.io/en/latest/usage.html
     "instant_start":   True,
     "history_days":    0,
-    "sub_folder":      True
+    "sub_folder":      True,
+    "open_after_offline_screenshot": False,
+    "binds": {
+        "screenshot":    "<Super>X",
+        "waiter":        "<Super>W",
+        "history":       "<Super>H",
+        "destroy":       "<Escape>",
+        "upload_latest": "<Super>U",
+        "video":         "<Alt>Z"
+    }
 }
 
 if not os.path.isfile(os.path.join(CONFIG_PATH, 'sysconfig.json')):
@@ -160,7 +169,8 @@ try:
     USER = SYSTEM_CONFIG['user']
     INSTANT_START = SYSTEM_CONFIG['instant_start']
     SUB_FOLDER = SYSTEM_CONFIG['sub_folder']
-
+    BINDS = SYSTEM_CONFIG['binds']
+    OPEN_AFTER_SS = SYSTEM_CONFIG['open_after_offline_screenshot']
     if SYSTEM_CONFIG['pystray_backend'] is not None:
         os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
 except Exception:
@@ -180,6 +190,7 @@ except Exception:
     USER = SYSTEM_CONFIG['user']
     INSTANT_START = SYSTEM_CONFIG['instant_start']
     SUB_FOLDER = SYSTEM_CONFIG['sub_folder']
+    OPEN_AFTER_SS = SYSTEM_CONFIG['open_after_offline_screenshot']
 
     if SYSTEM_CONFIG['pystray_backend'] is not None:
         os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
@@ -343,6 +354,7 @@ if not os.path.isfile(DESKTOP_FILE_PATH):
 UPLOAD_AFTER_TASK = SYSTEM_CONFIG['upload'] == True
 DRAW_AFTER_TASK = SYSTEM_CONFIG['draw'] == True
 LATEST_KEY = None
+KEY_HISTORY = []
 KEY_PRESSED = None
 FIRST_HISTORY_OPEN = True
 VIDEO_RECORDER = None

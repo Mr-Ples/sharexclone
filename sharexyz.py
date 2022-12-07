@@ -710,7 +710,7 @@ class VideoRecorder:
         self.recording = False
         self.proc = None
 
-        Keybinder.bind("<Alt>Z", self.take_video)
+        Keybinder.bind(env.SYSTEM_CONFIG['binds']['video'], self.take_video)
 
     def kill_video(self):
         if self.recording and self.proc:
@@ -724,6 +724,10 @@ class VideoRecorder:
 
     def take_video(self, keystring):
         log('take video in')
+        if self.proc and self.proc.poll() is not None:
+            self.recording = False
+            env.WAITER['active'] = False
+            self.proc = None
 
         if self.recording and self.proc:
             def _wait_for_exit_safe():
@@ -758,7 +762,8 @@ class VideoRecorder:
 
             try:
                 if not env.UPLOAD_AFTER_TASK:
-                    os.system('xdg-open "%s"' % env.VIDEOS_DIR)
+                    if env.OPEN_AFTER_SS:
+                        os.system('xdg-open "%s"' % env.VIDEOS_DIR)
                     update_history_file(self.file)
 
                     save_notify.close()
@@ -838,9 +843,9 @@ class ShareXYZTool(Gtk.Window):
 
         env.VIDEO_RECORDER = VideoRecorder()
         Keybinder.init()
-        Keybinder.bind("<Super>X", self.take_screenshot)
-        Keybinder.bind("<Super>W", self.disable_waiter)
-        Keybinder.bind("<Super>H", HistoryWindow.reopen_history_window)
+        Keybinder.bind(env.SYSTEM_CONFIG['binds']['screenshot'], self.take_screenshot)
+        Keybinder.bind(env.SYSTEM_CONFIG['binds']['waiter'], self.disable_waiter)
+        Keybinder.bind(env.SYSTEM_CONFIG['binds']['history'], HistoryWindow.reopen_history_window)
 
     def take_screenshot(self, keystring):
         log('take screenshot in')
@@ -912,7 +917,7 @@ class ScreenshotCanvas(tk.Tk):
         self.canvas.tag_bind(self.photo, "<B1-Motion>", self.on_move_press)
         self.canvas.tag_bind(self.photo, "<ButtonRelease-1>", self.on_button_release)
         self.canvas.tag_bind(self.photo, '<ButtonPress-3>', self.close_me)
-        self.canvas.bind_all('<Escape>', self.destroy_me)
+        self.canvas.bind_all(env.SYSTEM_CONFIG['binds']['destroy'], self.destroy_me)
 
     def destroy_me(self, event):
         log('destroy_me')
@@ -1034,7 +1039,7 @@ class TrayIcon:
             title='ShareXYZ',
             menu=self._build_menus()
         )
-        Keybinder.bind("<Super>U", self.__upload_latest)
+        Keybinder.bind(env.SYSTEM_CONFIG['binds']['upload_latest'], self.__upload_latest)
 
     def _build_menus(self):
         upload_file = pystray.MenuItem(
@@ -1746,12 +1751,16 @@ def on_press(key):
     except AttributeError:
         env.KEY_PRESSED = key
         debug_log('special key pressed: {0}'.format(key))
+    env.KEY_HISTORY.append(env.KEY_PRESSED)
     env.LATEST_KEY = env.KEY_PRESSED
 
 
 def on_release(key):
     env.KEY_PRESSED = None
-    if key == keyboard.Key.esc:
+    if env.SYSTEM_CONFIG['binds']['destroy'] != "<Escape>":
+        print("YOU NEED TO SET A WAY TO CANCEL RECORDINGS!")
+
+    if env.SYSTEM_CONFIG['binds']['destroy'] == "<Escape>" and key == keyboard.Key.esc:
         log('ESC!')
         env.VIDEO_RECORDER.kill_video()
         env.WAITER['active'] = False
