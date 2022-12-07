@@ -174,41 +174,27 @@ if not os.path.isfile(os.path.join(CONFIG_PATH, 'sysconfig.json')):
     )
 
 SYSTEM_CONFIG = json.load(open(os.path.join(CONFIG_PATH, 'sysconfig.json')))
-try:
-    HISTORY_DAYS = SYSTEM_CONFIG['history_days']
-    USER = SYSTEM_CONFIG['user']
-    INSTANT_START = SYSTEM_CONFIG['instant_start']
-    SUB_FOLDER = SYSTEM_CONFIG['sub_folder']
-    BINDS = SYSTEM_CONFIG['binds']
-    OPEN_AFTER_SS = SYSTEM_CONFIG['open_after_offline_screenshot']
-    MONITORS_OFFSET = SYSTEM_CONFIG['monitors']
-    if SYSTEM_CONFIG['pystray_backend'] is not None:
-        os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
-except Exception:
-    traceback.print_exc()
-    print('Settings file does not contain all entries. Adding them...')
-    settings_dict = {}
-    for entry, value in SYSTEM_CONFIG.items():
-        settings_dict.update({entry: value})
-    for entry, value in SETTINGS_TEMPLTE.items():
-        if entry in settings_dict.keys():
-            continue
-        settings_dict.update({entry: value})
-    open(os.path.join(CONFIG_PATH, 'sysconfig.json'), 'w+').write(
-        json.dumps(settings_dict, indent=2)
-    )
-    print('Done writing settings:\n', json.dumps(settings_dict, indent=2))
-    SYSTEM_CONFIG = json.load(open(os.path.join(CONFIG_PATH, 'sysconfig.json')))
-    USER = SYSTEM_CONFIG['user']
-    INSTANT_START = SYSTEM_CONFIG['instant_start']
-    SUB_FOLDER = SYSTEM_CONFIG['sub_folder']
-    OPEN_AFTER_SS = SYSTEM_CONFIG['open_after_offline_screenshot']
-    MONITORS_OFFSET = SYSTEM_CONFIG['monitors']
-    BINDS = SYSTEM_CONFIG['binds']
+updated_dict = {}
+for entry, value in SYSTEM_CONFIG.items():
+    updated_dict.update({entry: value})
+for entry, value in SETTINGS_TEMPLTE.items():
+    if entry in updated_dict.keys():
+        continue
+    updated_dict.update({entry: value})
+open(os.path.join(CONFIG_PATH, 'sysconfig.json'), 'w+').write(
+    json.dumps(updated_dict, indent=2)
+)
+print('Done writing settings:\n', json.dumps(updated_dict, indent=2))
 
-    if SYSTEM_CONFIG['pystray_backend'] is not None:
-        os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
-    HISTORY_DAYS = SYSTEM_CONFIG['history_days']
+HISTORY_DAYS = SYSTEM_CONFIG['history_days']
+USER = SYSTEM_CONFIG['user']
+INSTANT_START = SYSTEM_CONFIG['instant_start']
+SUB_FOLDER = SYSTEM_CONFIG['sub_folder']
+BINDS = SYSTEM_CONFIG['binds']
+OPEN_AFTER_SS = SYSTEM_CONFIG['open_after_offline_screenshot']
+MONITORS_OFFSET = SYSTEM_CONFIG['monitors']
+if SYSTEM_CONFIG['pystray_backend'] is not None:
+    os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
 
 try:
     import gi
