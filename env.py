@@ -198,6 +198,7 @@ except Exception:
         json.dumps(settings_dict, indent=2)
     )
     print('Done writing settings:\n', json.dumps(settings_dict, indent=2))
+    SYSTEM_CONFIG = json.load(open(os.path.join(CONFIG_PATH, 'sysconfig.json')))
     USER = SYSTEM_CONFIG['user']
     INSTANT_START = SYSTEM_CONFIG['instant_start']
     SUB_FOLDER = SYSTEM_CONFIG['sub_folder']
