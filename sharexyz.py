@@ -886,13 +886,14 @@ class ScreenshotCanvas(tk.Tk):
         if monitor1.x > monitor2.x:
             monitor1 = get_monitors()[1]
             monitor2 = get_monitors()[0]
+
         log("y diff:", monitor2.y - monitor1.y)
-        bbox_monitor1 = (monitor1.x + env.MONITORS_OFFSET['monitor1']['x_offset'],
-                         monitor1.y + env.MONITORS_OFFSET['monitor1']['y_offset'],
+        bbox_monitor1 = (monitor1.x,
+                         monitor1.y,
                          monitor1.width + env.MONITORS_OFFSET['monitor1']['x_offset'],
                          monitor1.height + env.MONITORS_OFFSET['monitor1']['y_offset'])
-        bbox_monitor2 = (monitor2.x + env.MONITORS_OFFSET['monitor2']['x_offset'],
-                         monitor2.y + env.MONITORS_OFFSET['monitor2']['y_offset'],
+        bbox_monitor2 = (monitor2.x,
+                         monitor2.y,
                          monitor1.width + monitor2.width + env.MONITORS_OFFSET['monitor2']['x_offset'],
                          monitor2.height + env.MONITORS_OFFSET['monitor2']['y_offset'])
 
