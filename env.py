@@ -139,22 +139,32 @@ if not os.path.isfile(os.path.join(CONFIG_PATH, f'{RecordingMode.FollowCursor.na
     )
 
 SETTINGS_TEMPLTE = {
-    "upload":          True,
-    "draw":            False,
-    "user":            "yournamehere",
-    "mode":            0,
-    "pystray_backend": None,  # https://pystray.readthedocs.io/en/latest/usage.html
-    "instant_start":   True,
-    "history_days":    0,
-    "sub_folder":      True,
+    "upload":                        True,
+    "draw":                          False,
+    "user":                          "yournamehere",
+    "mode":                          0,
+    "pystray_backend":               None,  # https://pystray.readthedocs.io/en/latest/usage.html
+    "instant_start":                 True,
+    "history_days":                  0,
+    "sub_folder":                    True,
     "open_after_offline_screenshot": False,
-    "binds": {
+    "binds":                         {
         "screenshot":    "<Super>X",
         "waiter":        "<Super>W",
         "history":       "<Super>H",
         "destroy":       "<Escape>",
         "upload_latest": "<Super>U",
         "video":         "<Alt>Z"
+    },
+    "monitors":                      {
+        "monitor1": {
+            "y_offset": 0,
+            "x_offset": 0
+        },
+        "monitor2": {
+            "y_offset": 0,
+            "x_offset": 0
+        }
     }
 }
 
@@ -171,6 +181,7 @@ try:
     SUB_FOLDER = SYSTEM_CONFIG['sub_folder']
     BINDS = SYSTEM_CONFIG['binds']
     OPEN_AFTER_SS = SYSTEM_CONFIG['open_after_offline_screenshot']
+    MONITORS_OFFSET = SYSTEM_CONFIG['monitors']
     if SYSTEM_CONFIG['pystray_backend'] is not None:
         os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
 except Exception:
@@ -191,6 +202,7 @@ except Exception:
     INSTANT_START = SYSTEM_CONFIG['instant_start']
     SUB_FOLDER = SYSTEM_CONFIG['sub_folder']
     OPEN_AFTER_SS = SYSTEM_CONFIG['open_after_offline_screenshot']
+    MONITORS_OFFSET = SYSTEM_CONFIG['monitors']
 
     if SYSTEM_CONFIG['pystray_backend'] is not None:
         os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
