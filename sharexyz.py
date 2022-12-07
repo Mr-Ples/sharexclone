@@ -3,7 +3,6 @@ try:
     import env
 finally:
     pass
-
 import base64
 import concurrent
 import datetime
@@ -28,6 +27,7 @@ from operator import getitem
 from typing import (
     Callable,
     Any,
+    List,
 )
 
 import boto3
@@ -93,7 +93,7 @@ class File:
         directory = env.SCREENSHOTS_DIR if self._extension == '.png' else env.VIDEOS_DIR
         if not self._path:
             self._path = os.path.join(directory, self.file_name)
-        log(self)
+        debug_log(self)
 
     def __str__(self):
         return f"file_name={self.file_name}\n"\
@@ -178,11 +178,67 @@ def _clear_local_files_not_in_history():
     log("Cleared old files")
 
 
+_ = ['ffmpeg -i https://s3.eu-central-1.amazonaws.com/cos-dev-attachments/ShareX/notsimon/nkxiAUcnmyvTlCHK.mp4 -ss 00:00:1 -vframes 1 -f image2 /home/simonl/bin/sharexyz/data/temp/nkxiAUcnmyvTlCHK.png']
+_ = ['ffmpeg -i https://s3.eu-central-1.amazonaws.com/cos-dev-attachments/ShareX/notsimon/BtSQwAfPKLjPOAno.mp4 -ss 00:00:01 -vframes 1 /home/simonl/bin/sharexyz/data/temp/BtSQwAfPKLjPOAno.png']
+
+
 def _generate_cache():
+    def get_thumbnail(inpt: str, data) -> List[str]:
+        if os.path.isfile(temp_file):
+            os.remove(temp_file)
+        cmd = ["ffmpeg",
+               "-i",
+               inpt,
+               "-ss",
+               "00:00:1",
+               "-vframes",
+               "1",
+               "-f",
+               "image2",
+               temp_file]
+        log(cmd)
+        proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        proc.wait(15)
+        err = proc.stderr.read().decode("utf-8")
+        out = proc.stdout.read().decode("utf-8")
+        if 'Output file is empty' in err:
+            if os.path.isfile(temp_file):
+                os.remove(temp_file)
+            cmd.remove('-ss')
+            cmd.remove('00:00:1')
+            log(cmd)
+            proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+            proc.wait(15)
+            err = proc.stderr.read().decode("utf-8")
+            out = proc.stdout.read().decode("utf-8")
+            if 'does not contain an image sequence pattern or a pattern is invalid' in err:
+                err = "success:" + temp_file
+
+        if 'moov atom not found' in err:
+            err = "broken video"
+            data['broken_video'] = True
+        if 'oes not contain any stream' in err:
+            err = "broken mimetype"
+            data['broken_video'] = True
+        if '403 Forbidden' in err:
+            err = "403 Forbidden"
+            data['forbidden'] = True
+
+        log("ERR:", err)
+        log("OUT:", out)
+
+
+
+        return cmd
+
     log('generate cache')
     start = time.time()
     _order_history()
     for file_name, data in env.ONLINE_HISTORY.items():
+        if data.get('tried'):
+            continue
+        # print("TRIED ONLINE", file_name, data.get('tried'))
+        data['tried'] = True
         # add url entry if there is none
         if data['place'] == 'online' and not data.get('url'):
             debug_log(f'file={file_name}, Adding url')
@@ -211,18 +267,7 @@ def _generate_cache():
             debug_log(f'file={file_name}, Data type video, getting icon path')
             if data['place'] == 'local':
                 debug_log(f'file={file_name}, local video')
-                subprocess.Popen(
-                    ["ffmpeg",
-                     "-i",
-                     f"{os.path.join(env.VIDEOS_DIR, file_name)}",
-                     "-ss",
-                     "00:00:1",
-                     "-vframes",
-                     "1",
-                     '-f',
-                     'image2',
-                     f"{temp_file}"]
-                ).wait(10)
+                get_thumbnail(os.path.join(env.VIDEOS_DIR, file_name), data)
                 if os.path.isfile(temp_file):
                     env.ONLINE_HISTORY[file_name]['icon_path'] = temp_file
                     debug_log('thumbnail from local video SUCCESS', env.ONLINE_HISTORY[file_name])
@@ -231,18 +276,8 @@ def _generate_cache():
                     debug_log('thumbnail from local video FAILED', env.ONLINE_HISTORY[file_name])
                 continue
             debug_log(f'file={file_name}, online video')
-            subprocess.Popen(
-                ["ffmpeg",
-                 "-i",
-                 f"{data['url']}",
-                 "-ss",
-                 "00:00:1",
-                 "-vframes",
-                 "1",
-                 "-f",
-                 "image2",
-                 temp_file]
-            ).wait(10)
+            get_thumbnail(data['url'], data)
+
             if os.path.isfile(temp_file):
                 env.ONLINE_HISTORY[file_name]['icon_path'] = temp_file
                 debug_log('thumbnail from online video  SUCCESS', env.ONLINE_HISTORY[file_name])
@@ -256,8 +291,12 @@ def _generate_cache():
                 img = Image.open(requests.get(data['url'], stream=True).raw)
                 img.save(temp_file)
                 debug_log(f'file={file_name}, online screenshot gotten')
-            except:
-                traceback.print_exc()
+            except Exception as err:
+                if 'cannot identify image file' in str(err):
+                    data['broken_screenshot'] = True
+                else:
+                    traceback.print_exc()
+                    log(f'file={file_name}, url={data["url"]}, online screenshot')
             if os.path.isfile(temp_file):
                 env.ONLINE_HISTORY[file_name]['icon_path'] = temp_file
                 debug_log('thumbnail from online picture SUCCESS', env.ONLINE_HISTORY[file_name])
@@ -280,6 +319,10 @@ def _generate_cache():
             raise Exception("Icon path doesn't exist even though we think it does" + env.ONLINE_HISTORY[file_name])
 
     for file_name, data in env.HISTORY.items():
+        if data.get('tried'):
+            continue
+        data['tried'] = True
+        # print("TRIED OFFLINE", file_name, data.get('tried'))
 
         # add url entry if there is none
         if data['place'] == 'online' and not data.get('url'):
@@ -310,18 +353,7 @@ def _generate_cache():
             debug_log(f'file={file_name}, Data type video, getting icon path')
             if data['place'] == 'local':
                 debug_log(f'file={file_name}, local video')
-                subprocess.Popen(
-                    ["ffmpeg",
-                     "-i",
-                     f"{os.path.join(env.VIDEOS_DIR, file_name)}",
-                     "-ss",
-                     "00:00:1",
-                     "-vframes",
-                     "1",
-                     '-f',
-                     'image2',
-                     f"{temp_file}"]
-                ).wait(10)
+                get_thumbnail(os.path.join(env.VIDEOS_DIR, file_name), data)
                 if os.path.isfile(temp_file):
                     env.HISTORY[file_name]['icon_path'] = temp_file
                     debug_log('thumbnail from local video SUCCESS', env.HISTORY[file_name])
@@ -330,18 +362,7 @@ def _generate_cache():
                     debug_log('thumbnail from local video FAILED', env.HISTORY[file_name])
                 continue
             debug_log(f'file={file_name}, online video')
-            subprocess.Popen(
-                ["ffmpeg",
-                 "-i",
-                 f"{data['url']}",
-                 "-ss",
-                 "00:00:1",
-                 "-vframes",
-                 "1",
-                 "-f",
-                 "image2",
-                 temp_file]
-            ).wait(10)
+            get_thumbnail(data['url'], data)
             if os.path.isfile(temp_file):
                 env.HISTORY[file_name]['icon_path'] = temp_file
                 debug_log('thumbnail from online video  SUCCESS', env.HISTORY[file_name])
@@ -357,6 +378,7 @@ def _generate_cache():
                 debug_log(f'file={file_name}, online screenshot gotten')
             except:
                 traceback.print_exc()
+                data['reason'] = 'rekt'
             if os.path.isfile(temp_file):
                 env.HISTORY[file_name]['icon_path'] = temp_file
                 debug_log('thumbnail from online picture SUCCESS', env.HISTORY[file_name])
@@ -379,38 +401,40 @@ def _generate_cache():
             raise Exception("Icon path doesn't exist even though we think it does" + env.HISTORY[file_name])
 
     _order_history()
-    open(env.HISTORY_DIR, 'w+').write(json.dumps(env.HISTORY, indent=2, default=str))
-    open(env.ONLINE_HISTORY_DIR, 'w+').write(json.dumps(env.ONLINE_HISTORY, indent=2, default=str))
     log(f'Cache generated, duration={time.time() - start}')
 
 
-def _order_history():
+def compile_ordered_dict(dictio, nr_items: int = 0):
     sorted_dict = OrderedDict(
         sorted(
-            env.HISTORY.items(),
+            dictio.items(),
             key=lambda x: datetime.datetime.strptime(str(getitem(x[1], 'date')).split('+')[0], "%Y-%m-%d %H:%M:%S").replace(microsecond=0, tzinfo=datetime.timezone.utc).astimezone(tz=datetime.timezone.utc),
             reverse=True
         )
     )
-    sliced = islice(sorted_dict.items(), 50)
-    sliced_dict = OrderedDict(sliced)
-    env.HISTORY = sliced_dict
+    sliced = islice(sorted_dict.items(), nr_items or len(sorted_dict))
+    return OrderedDict(sliced)
 
-    sorted_dict = OrderedDict(
-        sorted(
-            env.ONLINE_HISTORY.items(),
-            key=lambda x: datetime.datetime.strptime(str(getitem(x[1], 'date')).split('+')[0], "%Y-%m-%d %H:%M:%S").replace(microsecond=0, tzinfo=datetime.timezone.utc).astimezone(tz=datetime.timezone.utc),
-            reverse=True
-        )
-    )
-    sliced = islice(sorted_dict.items(), 500)
-    sliced_dict = OrderedDict(sliced)
-    env.ONLINE_HISTORY = sliced_dict
+
+def _order_history():
+    env.HISTORY = compile_ordered_dict(env.HISTORY, 50)
+    env.ONLINE_HISTORY = compile_ordered_dict(env.ONLINE_HISTORY)
+    with open(env.HISTORY_DIR, 'w+') as on_his:
+        on_his.write(json.dumps(env.ONLINE_HISTORY, indent=2, default=str))
+    with open(env.ONLINE_HISTORY_DIR, 'w+') as his:
+        his.write(json.dumps(env.HISTORY, indent=2, default=str))
+
+
+def get_history_days() -> int:
+    days = 7 * (env.HISTORY_DAYS + 1)
+    return days
 
 
 def validate_date_age(date: datetime.datetime):
+    if get_history_days() > 84:
+        return True
     time_between_insertion = datetime.datetime.utcnow().replace(microsecond=0, tzinfo=datetime.timezone.utc).astimezone(tz=datetime.timezone.utc) - date.replace(microsecond=0, tzinfo=datetime.timezone.utc).astimezone(tz=datetime.timezone.utc)
-    return time_between_insertion.days < 30
+    return time_between_insertion.days < get_history_days()
 
 
 def get_bucket_history(limit: int = 100):
@@ -436,14 +460,17 @@ def get_bucket_history(limit: int = 100):
         ),
         key=obj_last_modified,
         reverse=True
-    )[:limit]
+    )
+    log("Online items:", len(list(sorted_objects)))
 
     for my_bucket_object in sorted_objects:
-        if not validate_date_age(my_bucket_object.last_modified):
-            break
+        # if not validate_date_age(my_bucket_object.last_modified):
+        #     break
         if not ('.mp4' in my_bucket_object.key or '.png' in my_bucket_object.key):
             continue
         name = my_bucket_object.key.split('/')[-1]
+        if env.ONLINE_HISTORY.get(name):
+            continue
         if limit > 100:
             env.ONLINE_HISTORY[name] = {
                 "date":  my_bucket_object.last_modified.replace(microsecond=0, tzinfo=datetime.timezone.utc).astimezone(tz=datetime.timezone.utc),
@@ -458,6 +485,8 @@ def get_bucket_history(limit: int = 100):
                 "place": "online",
                 "url":   env.URL + name
             }
+
+    _order_history()
 
 
 def _get_history():
@@ -491,7 +520,7 @@ def _get_history():
     except:
         traceback.print_exc()
 
-    future = thread_pool.submit(get_bucket_history, 500)
+    future = thread_pool.submit(get_bucket_history, 101)
     try:
         future.result(15)
     except:
@@ -501,7 +530,7 @@ def _get_history():
 
     _generate_cache()
 
-    log(json.dumps(env.HISTORY, indent=2, default=str))
+    debug_log(json.dumps(env.HISTORY, indent=2, default=str))
 
     # for file in os.listdir(os.path.join(env.DATA_PATH, 'temp')):
     # 	if file not in sliced_doct.keys():
@@ -1005,25 +1034,72 @@ class TrayIcon:
         Keybinder.bind("<Super>U", self.__upload_latest)
 
     def _build_menus(self):
-        online_history = pystray.MenuItem(
-            'Online History',
-            self.show_online_history
+        days_menu = pystray.Menu(
+            pystray.MenuItem(
+                '7 Days',
+                self._set_history_state(0),
+                checked=self._get_history_state(0),
+                radio=True
+            ),
+            pystray.MenuItem(
+                '28 Days',
+                self._set_history_state(1),
+                checked=self._get_history_state(1),
+                radio=True
+            ),
+            pystray.MenuItem(
+                '56 Days',
+                self._set_history_state(2),
+                checked=self._get_history_state(2),
+                radio=True
+            ),
+            pystray.MenuItem(
+                '84 Days',
+                self._set_history_state(3),
+                checked=self._get_history_state(3),
+                radio=True
+            ),
+            pystray.MenuItem(
+                'All',
+                self._set_history_state(4),
+                checked=self._get_history_state(4),
+                radio=True
+            )
         )
+
+        history_settings = pystray.MenuItem(
+            'History Settings',
+            days_menu
+        )
+
+        history_multi_menu = pystray.Menu(
+            pystray.MenuItem(
+                'Online History',
+                self.show_online_history
+            ),
+            pystray.MenuItem(
+                'History',
+                self.show_history
+            ),
+            history_settings
+        )
+
         history = pystray.MenuItem(
             'History',
-            self.show_history
+            history_multi_menu
         )
+
         radio_menu = pystray.Menu(
             pystray.MenuItem(
                 'Select Region',
-                self._set_state(0),
-                checked=self._get_state(0),
+                self._set_mode_state(0),
+                checked=self._get_mode_state(0),
                 radio=True
             ),
             pystray.MenuItem(
                 'Follow Cursor',
-                self._set_state(1),
-                checked=self._get_state(1),
+                self._set_mode_state(1),
+                checked=self._get_mode_state(1),
                 radio=True
             )
         )
@@ -1031,6 +1107,12 @@ class TrayIcon:
         recording_mode = pystray.MenuItem(
             'Recording Mode',
             radio_menu
+        )
+
+        instant_start = pystray.MenuItem(
+            'Instant start',
+            self._instant_start,
+            checked=lambda item: env.INSTANT_START
         )
 
         upload_after_capture = pystray.MenuItem(
@@ -1062,9 +1144,9 @@ class TrayIcon:
 
         exit_menu = pystray.MenuItem('Quit', self.exit_everything)
         return pystray.Menu(
-            online_history,
             history,
             recording_mode,
+            instant_start,
             upload_after_capture,
             draw_after_capture,
             upload_latest,
@@ -1106,6 +1188,11 @@ class TrayIcon:
         )
         env.WAITER['active'] = False
 
+    def _instant_start(self, icon, item):
+        env.INSTANT_START = not item.checked
+        env.SYSTEM_CONFIG['instant_start'] = env.INSTANT_START
+        open(os.path.join(env.CONFIG_PATH, 'sysconfig.json'), 'w+').write(json.dumps(env.SYSTEM_CONFIG, indent=2))
+
     def _on_upload_after_task(self, icon, item):
         env.UPLOAD_AFTER_TASK = not item.checked
         env.SYSTEM_CONFIG['upload'] = env.UPLOAD_AFTER_TASK
@@ -1131,7 +1218,21 @@ class TrayIcon:
         env.SYSTEM_CONFIG['draw'] = env.DRAW_AFTER_TASK
         open(os.path.join(env.CONFIG_PATH, 'sysconfig.json'), 'w+').write(json.dumps(env.SYSTEM_CONFIG, indent=2))
 
-    def _set_state(self, v):
+    def _set_history_state(self, v):
+        def inner(icon, item):
+            env.SYSTEM_CONFIG['history_days'] = v
+
+            open(os.path.join(env.CONFIG_PATH, 'sysconfig.json'), 'w+').write(json.dumps(env.SYSTEM_CONFIG, indent=2))
+
+        return inner
+
+    def _get_history_state(self, v):
+        def inner(item):
+            return env.SYSTEM_CONFIG['history_days'] == v
+
+        return inner
+
+    def _set_mode_state(self, v):
         def inner(icon, item):
             env.SYSTEM_CONFIG['mode'] = v
 
@@ -1139,7 +1240,7 @@ class TrayIcon:
 
         return inner
 
-    def _get_state(self, v):
+    def _get_mode_state(self, v):
         def inner(item):
             return env.SYSTEM_CONFIG['mode'] == v
 
@@ -1172,19 +1273,31 @@ class OnlineHistoryWindow(Gtk.Window):
         self.set_icon_from_file(env.ICON_PATH)
         self.modify_bg(Gtk.StateType.NORMAL, Gdk.Color(65535, 65535, 65535))
         self.set_title("Online History")
-        self.set_size_request(700, 800)
+        self.set_size_request(1000, 1000)
 
         sw = Gtk.ScrolledWindow()
         problem_files = []
-        log(env.ONLINE_HISTORY.items())
-        for index, item in enumerate(env.ONLINE_HISTORY.items()):
-            file_name, data = item
+        debug_log(env.ONLINE_HISTORY.items())
+
+        notify_upload = NotificationBubble()
+        notify_upload.send_notification('Opening Window...', '')
+
+        non_forbidden_items = {key: value for key, value in env.ONLINE_HISTORY.items() if (not value.get('forbidden')) and (not value.get('broken_video')) and (not value.get('broken_screenshot')) and validate_date_age(datetime.datetime.strptime(value['date'].split(' ')[0], "%Y-%m-%d"))}
+        sorted_dict = compile_ordered_dict(non_forbidden_items)
+        for index, item in enumerate(sorted_dict.items()):
+            try:
+                file_name, data = item
+            except Exception as err:
+                traceback.print_exc()
+                print(item, str(err))
+                continue
+
             try:
                 thumbnail = Gtk.Image.new_from_pixbuf(
                     GdkPixbuf.Pixbuf.new_from_file_at_scale(
                         filename=data['icon_path'],
-                        width=500,
-                        height=300,
+                        width=800,
+                        height=480,
                         preserve_aspect_ratio=False
                     )
                 )
@@ -1216,7 +1329,7 @@ class OnlineHistoryWindow(Gtk.Window):
             if data['place'] == 'local':
                 copy_url.set_sensitive(False)
 
-            thumbnail.set_size_request(500, 300)
+            thumbnail.set_size_request(800, 480)
             icon.set_size_request(50, 50)
             upload.set_size_request(70, 150)
             copy_url.set_size_request(70, 150)

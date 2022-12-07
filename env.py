@@ -118,6 +118,14 @@ class RecordingMode(enum.Enum):
     All = 4
 
 
+class HistoryDays(enum.Enum):
+    Days7 = 0
+    Days28 = 1
+    Days56 = 2
+    Days84 = 3
+    All = 4
+
+
 if not os.path.isfile(os.path.join(CONFIG_PATH, f'{RecordingMode.Area.name}.json')):
     CONFIG_TEMPLATE['input']["video_area"] = "fixed"
 
@@ -136,7 +144,8 @@ SETTINGS_TEMPLTE = {
     "user":            "yournamehere",
     "mode":            0,
     "pystray_backend": None,  # https://pystray.readthedocs.io/en/latest/usage.html
-    "instant_start":   True
+    "instant_start":   True,
+    "history_days":    0
 }
 
 if not os.path.isfile(os.path.join(CONFIG_PATH, 'sysconfig.json')):
@@ -146,6 +155,7 @@ if not os.path.isfile(os.path.join(CONFIG_PATH, 'sysconfig.json')):
 
 SYSTEM_CONFIG = json.load(open(os.path.join(CONFIG_PATH, 'sysconfig.json')))
 try:
+    HISTORY_DAYS = SYSTEM_CONFIG['history_days']
     USER = SYSTEM_CONFIG['user']
     INSTANT_START = SYSTEM_CONFIG['instant_start']
 
@@ -170,6 +180,7 @@ except Exception:
 
     if SYSTEM_CONFIG['pystray_backend'] is not None:
         os.environ['PYSTRAY_BACKEND'] = SYSTEM_CONFIG['pystray_backend']
+    HISTORY_DAYS = SYSTEM_CONFIG['history_days']
 
 try:
     import gi
@@ -251,7 +262,7 @@ if not os.path.isfile(os.path.join(SOUNDS_DIR, 'upload_failed.wav')):
 BUCKET_NAME = 'cos-dev-attachments'
 BUCKET_FOLDER = f'ShareX/{USER}/'
 URL = f'https://s3.{os.getenv("REGION_NAME")}.amazonaws.com/{BUCKET_NAME}/{BUCKET_FOLDER}'
-
+print(URL)
 # local dirs
 VIDEOS_DIR = os.path.join(HOME, 'videos')
 if not os.path.isdir(VIDEOS_DIR):
