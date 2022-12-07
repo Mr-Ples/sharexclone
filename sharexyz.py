@@ -896,6 +896,7 @@ class ScreenshotCanvas(tk.Tk):
                          monitor1.width + monitor2.width + env.MONITORS_OFFSET['monitor2']['x_offset'],
                          monitor2.height + env.MONITORS_OFFSET['monitor2']['y_offset'])
 
+        debug_log(f"monit1:{bbox_monitor1}, monit2:{bbox_monitor2}")
         self.monitor = monitor1
         if abs_coord_x > monitor1.width:
             self.monitor = monitor2
