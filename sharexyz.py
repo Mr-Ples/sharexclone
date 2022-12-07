@@ -833,6 +833,7 @@ class VideoRecorder:
             stderr=subprocess.PIPE,
             # bufsize=0
         )
+        env.RECORDING_PROC = self.proc
 
 
 class ShareXYZTool(Gtk.Window):
@@ -849,7 +850,8 @@ class ShareXYZTool(Gtk.Window):
 
     def take_screenshot(self, keystring):
         log('take screenshot in')
-        if env.WAITER['active']:
+
+        if env.WAITER['active'] and not (env.RECORDING_PROC and env.RECORDING_PROC.poll is not None):
             screenshot_waiter_notify = NotificationBubble()
             screenshot_waiter_notify.send_notification(
                 "Please wait...", "Taking or uploading screenshot"
