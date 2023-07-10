@@ -178,8 +178,8 @@ def _clear_local_files_not_in_history():
     log("Cleared old files")
 
 
-_ = ['ffmpeg -i https://s3.eu-central-1.amazonaws.com/cos-dev-attachments/ShareX/notsimon/nkxiAUcnmyvTlCHK.mp4 -ss 00:00:1 -vframes 1 -f image2 /home/simonl/bin/sharexyz/data/temp/nkxiAUcnmyvTlCHK.png']
-_ = ['ffmpeg -i https://s3.eu-central-1.amazonaws.com/cos-dev-attachments/ShareX/notsimon/BtSQwAfPKLjPOAno.mp4 -ss 00:00:01 -vframes 1 /home/simonl/bin/sharexyz/data/temp/BtSQwAfPKLjPOAno.png']
+_ = ['ffmpeg -i https://s3.eu-central-1.amazonaws.com/cos-dev-attachments/ShareX/notsimon/nkxiAUcnmyvTlCHK.mp4 -ss 00:00:1 -vframes 1 -f image2 /run/media/simonl/Volume/Lib/sharexyz/data/temp/nkxiAUcnmyvTlCHK.png']
+_ = ['ffmpeg -i https://s3.eu-central-1.amazonaws.com/cos-dev-attachments/ShareX/notsimon/BtSQwAfPKLjPOAno.mp4 -ss 00:00:01 -vframes 1 /run/media/simonl/Volume/Lib/sharexyz/data/temp/BtSQwAfPKLjPOAno.png']
 
 
 def _generate_cache():
@@ -604,6 +604,10 @@ def upload_file(file: File, keep=False):
         extra_args['ContentType'] = file_mime_type
 
         try:
+            print(path,  env.BUCKET_NAME, object_name, extra_args)
+            print(f"""aws_access_key_id={os.getenv("AWS_ACCESS_KEY_ID")},
+        aws_secret_access_key={os.getenv("AWS_SECRET_ACCESS_KEY")},
+        region_name={os.getenv("REGION_NAME")}""")
             response = s3_client.upload_file(
                 path, env.BUCKET_NAME, object_name, ExtraArgs=extra_args
             )

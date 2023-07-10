@@ -31,7 +31,7 @@ CONFIG_PATH = os.path.join(DATA_PATH, 'config')
 if not os.path.isdir(CONFIG_PATH):
     os.mkdir(CONFIG_PATH)
 
-LOGS_SESSION = datetime.datetime.now().replace(microsecond=0)
+LOGS_SESSION = datetime.datetime.now().replace(microsecond=0).strftime("%Y_%m_%d__%H_%M_%S")
 LOGS_PATH = os.path.join(HOME, 'logs')
 if not os.path.isdir(LOGS_PATH):
     os.mkdir(LOGS_PATH)
