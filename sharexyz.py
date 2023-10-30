@@ -588,9 +588,8 @@ def upload_file(file: File, keep=False):
             f'file_name={file_name}\n'
             f'object_name={object_name}'
         )
-        # mimetypes.add_type('video/mp4', '.mp4')
+        mimetypes.add_type('image/webp', '.webp')
         file_mime_type, _ = mimetypes.guess_type(file_name)
-        file_mime_type = file_mime_type or "image/webp"
         log(file_mime_type)
         debug_log(file_mime_type)
         extra_args = {
