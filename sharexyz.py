@@ -178,10 +178,6 @@ def _clear_local_files_not_in_history():
     log("Cleared old files")
 
 
-_ = ['ffmpeg -i https://s3.eu-central-1.amazonaws.com/cos-dev-attachments/ShareX/notsimon/nkxiAUcnmyvTlCHK.mp4 -ss 00:00:1 -vframes 1 -f image2 /run/media/simonl/Volume/Lib/sharexyz/data/temp/nkxiAUcnmyvTlCHK.png']
-_ = ['ffmpeg -i https://s3.eu-central-1.amazonaws.com/cos-dev-attachments/ShareX/notsimon/BtSQwAfPKLjPOAno.mp4 -ss 00:00:01 -vframes 1 /run/media/simonl/Volume/Lib/sharexyz/data/temp/BtSQwAfPKLjPOAno.png']
-
-
 def _generate_cache():
     def get_thumbnail(inpt: str, data) -> List[str]:
         if os.path.isfile(temp_file):
@@ -438,7 +434,7 @@ def validate_date_age(date: datetime.datetime):
 
 def get_bucket_history(limit: int = 100):
     def _get_type(fiel_name: str):
-        return 'video' if 'mp4' in fiel_name else 'screenshot'
+        return 'video' if 'webp' in fiel_name or 'mp4' in fiel_name else 'screenshot'
 
     def obj_last_modified(myobj):
         return myobj.last_modified
@@ -465,7 +461,7 @@ def get_bucket_history(limit: int = 100):
     for my_bucket_object in sorted_objects:
         # if not validate_date_age(my_bucket_object.last_modified):
         #     break
-        if not ('.mp4' in my_bucket_object.key or '.png' in my_bucket_object.key):
+        if not ('.webp' in my_bucket_object.key or '.mp4' in my_bucket_object.key or '.png' in my_bucket_object.key):
             continue
 
         name = my_bucket_object.key.split('/')[-1]
@@ -592,7 +588,7 @@ def upload_file(file: File, keep=False):
             f'file_name={file_name}\n'
             f'object_name={object_name}'
         )
-        # mimetypes.add_type('video/mp4', '.mp4')
+        mimetypes.add_type('image/webp', '.webp')
         file_mime_type, _ = mimetypes.guess_type(file_name)
         log(file_mime_type)
         debug_log(file_mime_type)
@@ -773,7 +769,10 @@ class VideoRecorder:
                     save_notify.close()
                     env.WAITER['active'] = False
                 else:
-                    upload_file(self.file)
+                    nu_path = f"{self.file.file_path}.webp"
+                    subprocess.run(["ffmpeg", "-i", self.file.file_path, "-loop", "0", nu_path])
+                    nu_file = File(path=nu_path, extension=".mp4.webp", file_name=f"{self.file.file_name}.mp4")
+                    upload_file(nu_file)
                     # GLib.idle_add(lambda: upload_file(self.file))
             except:
                 traceback.print_exc()
